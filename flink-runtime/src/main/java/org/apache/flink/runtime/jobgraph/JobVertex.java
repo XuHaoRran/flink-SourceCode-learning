@@ -42,7 +42,11 @@ import java.util.Map;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** The base class for job vertexes. */
+/** The base class for job vertexes.
+ * 经过算子融合优化后符合条件的多个StreamNode可能会融合在一
+ * 起 生 成 一 个 JobVertex ， 即 一 个 JobVertex 包 含 一 个 或 多 个 算 子 ，
+ * JobVertex的输入是JobEdge，输出是IntermediateDataSet。
+ * */
 public class JobVertex implements java.io.Serializable {
 
     private static final long serialVersionUID = 1L;

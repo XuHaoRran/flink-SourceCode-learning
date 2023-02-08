@@ -236,10 +236,12 @@ public class StreamingJobGraphGenerator {
          */
         // Generate deterministic hashes for the nodes in order to identify them across
         // submission iff they didn't change.
+        // 如果它们没有更改,为节点生成确定性哈希 以便在提交时识别它们。
         Map<Integer, byte[]> hashes =
                 defaultStreamGraphHasher.traverseStreamGraphAndGenerateHashes(streamGraph);
 
         // Generate legacy version hashes for backwards compatibility
+        // 为了向后保持兼容，为每个节点生成老版本的Hash id
         List<Map<Integer, byte[]>> legacyHashes = new ArrayList<>(legacyStreamGraphHashers.size());
         for (StreamGraphHasher hasher : legacyStreamGraphHashers) {
             legacyHashes.add(hasher.traverseStreamGraphAndGenerateHashes(streamGraph));
@@ -275,7 +277,7 @@ public class StreamingJobGraphGenerator {
                         streamGraph.getUserArtifacts().stream()
                                 .collect(Collectors.toMap(e -> e.f0, e -> e.f1)),
                         jobGraph.getJobID());
-
+        // 如果有之前的缓存文件的配置，则重新读入
         for (Map.Entry<String, DistributedCache.DistributedCacheEntry> entry :
                 distributedCacheEntries.entrySet()) {
             jobGraph.addUserArtifact(entry.getKey(), entry.getValue());
@@ -480,12 +482,17 @@ public class StreamingJobGraphGenerator {
     }
 
     @SuppressWarnings("deprecation")
+
     private void preValidate() {
         CheckpointConfig checkpointConfig = streamGraph.getCheckpointConfig();
 
         if (checkpointConfig.isCheckpointingEnabled()) {
             // temporarily forbid checkpointing for iterative jobs
             // 如果没有为迭代任务强制开启检查点机制，则会抛出异常
+            //
+            //默认情况下，迭代作业不支持检查点，因为我们无法保证exactly once语义。状态检查点正常发生，
+            // 但快照期间传输中的记录将在失败时丢失。用户可以通过调用：env.enableCheckpoint（interval，true）
+            // 以降低的保证强制启用状态检查点
             if (streamGraph.isIterative() && !checkpointConfig.isForceCheckpointing()) {
                 throw new UnsupportedOperationException(
                         "Checkpointing is currently not supported by default for iterative jobs, as we cannot guarantee exactly once semantics. "
@@ -514,7 +521,7 @@ public class StreamingJobGraphGenerator {
                 if (operatorFactory != null) {
                     Class<?> operatorClass =
                             operatorFactory.getStreamOperatorClass(userClassloader);
-                    // 如果StreamOperator对象实现了InputSelectabl而接口，则抛出异常，因为目前该类型不支持开启检查
+                    // 如果StreamOperator对象实现了InputSelectable而接口，则抛出异常，因为目前该类型不支持开启检查
                     if (InputSelectable.class.isAssignableFrom(operatorClass)) {
 
                         throw new UnsupportedOperationException(
@@ -564,6 +571,7 @@ public class StreamingJobGraphGenerator {
         final Map<Integer, ChainedSourceInfo> chainedSources = new HashMap<>();
         final Map<Integer, OperatorChainInfo> chainEntryPoints = new HashMap<>();
 
+        // 遍历输入源
         for (Integer sourceNodeId : streamGraph.getSourceIDs()) {
             final StreamNode sourceNode = streamGraph.getStreamNode(sourceNodeId);
 
@@ -644,6 +652,7 @@ public class StreamingJobGraphGenerator {
 
         // iterate over a copy of the values, because this map gets concurrently modified
         for (OperatorChainInfo info : initialEntryPoints) {
+            // 创建Chian
             createChain(
                     info.getStartNodeId(),
                     1, // operators start at position 1 because 0 is for chained source inputs
@@ -675,11 +684,12 @@ public class StreamingJobGraphGenerator {
                 if (isChainable(outEdge, streamGraph)) { // 根据出边，判断该节点与其下游节点是否可以被链接在一起
                     chainableOutputs.add(outEdge); // 如果可以被链接在一起，则把该处便添加到chaninableOutputs中
                 } else {
-                    nonChainableOutputs.add(outEdge); // 如果不可以被链接在一起，则把该出百年添加到nonChanableOutputs中
+                    nonChainableOutputs.add(outEdge); // 如果不可以被链接在一起，则把该出边添加到nonChanableOutputs中
                 }
             }
             // 遍历可以被链接在一起的边，递归调用createChain方法，将结果全部添加到transitiveOutEdges
             for (StreamEdge chainable : chainableOutputs) {
+                //    添加chainable的整个链条所有的StreamEdge
                 transitiveOutEdges.addAll(
                         createChain(
                                 chainable.getTargetId(),
@@ -689,6 +699,7 @@ public class StreamingJobGraphGenerator {
             }
             // 遍历不可以被链接在一起的边，将其直接添加到transitiveOutEdges中，并递归调用createChain方法为后面的节点构建链接
             for (StreamEdge nonChainable : nonChainableOutputs) {
+                // transitiveOutEdges只要添加这个StreamEdge（noChainable），与chainable添加整个链条不一样
                 transitiveOutEdges.add(nonChainable);
                 createChain(
                         nonChainable.getTargetId(),
@@ -730,14 +741,15 @@ public class StreamingJobGraphGenerator {
                     currentNodeId.equals(startNodeId)
                             ? createJobVertex(startNodeId, chainInfo)
                             : new StreamConfig(new Configuration());
-            // 设置StreamConfig中的属性
+            // 将StreamNode中的配置信息序列化到StreamConfig中
             setVertexConfig(
                     currentNodeId,
                     config,
                     chainableOutputs,
                     nonChainableOutputs,
                     chainInfo.getChainedSources());
-
+            // 再次判断，如果是chain的起始节点，执行connect方法，创建JobEdge和IntermediateDataSet
+            // 否则将当前节点的StreamConfig添加到chainedConfig中
             if (currentNodeId.equals(startNodeId)) {
 
                 config.setChainStart();
@@ -748,6 +760,7 @@ public class StreamingJobGraphGenerator {
                 for (StreamEdge edge : transitiveOutEdges) {
                     NonChainedOutput output =
                             opIntermediateOutputs.get(edge.getSourceId()).get(edge);
+                    // 添加到transitiveOutputs
                     transitiveOutputs.add(output);
                     // 遍历物理出边，构建JobEdge
                     connect(startNodeId, edge, output);
@@ -767,7 +780,7 @@ public class StreamingJobGraphGenerator {
             }
 
             config.setOperatorID(currentOperatorId);
-
+            // 没有输出了，就设置ChainEnd了
             if (chainableOutputs.isEmpty()) {
                 config.setChainEnd();
             }
@@ -1313,7 +1326,7 @@ public class StreamingJobGraphGenerator {
         // 7.上下游的并行度相同
         // 8.StreamGraph的channing属性值为true
         StreamNode downStreamVertex = streamGraph.getTargetVertex(edge);
-
+        // 条件：下游入边是不是等于=1 && isChainableInput
         return downStreamVertex.getInEdges().size() == 1 && isChainableInput(edge, streamGraph);
     }
 

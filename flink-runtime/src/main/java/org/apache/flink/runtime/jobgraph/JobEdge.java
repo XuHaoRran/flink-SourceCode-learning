@@ -26,6 +26,17 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * This class represent edges (communication channels) in a job graph. The edges always go from an
  * intermediate result partition to a job vertex. An edge is parametrized with its {@link
  * DistributionPattern}.
+ *
+ *
+ * <p>JobEdeg 是 JobGraph 中 连 接 IntermediateDatSet 和 JobVertex 的
+ * 边 ， 表 示 JobGraph 中 的 一 个 数 据 流 转 通 道 ， 其 上 游 数 据 源 是
+ * IntermediateDataSet，下游消费者是JobVertex，即数据通过JobEdge
+ * 由IntermediateDataSet传递给目标JobVertex。</p>
+ *
+ * <p>
+ * JobEdge中的数据分发模式会直接影响执行时Task之间的数据连接关系，是点对点连接还是全连接。
+ * </p>
+ *
  */
 public class JobEdge implements java.io.Serializable {
 

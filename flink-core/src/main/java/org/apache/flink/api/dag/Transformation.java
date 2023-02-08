@@ -331,6 +331,8 @@ public abstract class Transformation<T> {
      * use-case-specific weights for this transformation. The weights are used for sharing managed
      * memory across transformations for the use cases. Check the individual {@link
      * ManagedMemoryUseCase} for the specific weight definition.
+     * 获取此transformation需要托管内存的operator scope用例，以及此transformation的用例特定权重。
+     * 权重用于在用例的转换之间共享托管内存。检查单个ManagedMemoryUseCase以了解特定的权重定义。
      */
     public Map<ManagedMemoryUseCase, Integer> getManagedMemoryOperatorScopeUseCaseWeights() {
         return Collections.unmodifiableMap(managedMemoryOperatorScopeUseCaseWeights);

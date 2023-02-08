@@ -59,7 +59,7 @@ public class StreamEdge implements Serializable {
      */
     private final int uniqueId;
 
-    /** The type number of the input for co-tasks. */
+    /** The type number of the input for co-tasks. co-tasks输入的类型数 */
     private final int typeNumber;
     /** The side-output tag (if any) of this {@link StreamEdge}. */
     private final OutputTag outputTag;
@@ -145,13 +145,13 @@ public class StreamEdge implements Serializable {
         this.exchangeMode = checkNotNull(exchangeMode);
         this.intermediateDatasetIdToProduce = intermediateDatasetId;
         this.edgeId =
-                sourceVertex
+                sourceVertex // 来源节点
                         + "_"
-                        + targetVertex
+                        + targetVertex // 目标节点
                         + "_"
-                        + typeNumber
+                        + typeNumber // co-task输入的类型数
                         + "_"
-                        + outputPartitioner
+                        + outputPartitioner // 输出分区器
                         + "_"
                         + uniqueId;
     }

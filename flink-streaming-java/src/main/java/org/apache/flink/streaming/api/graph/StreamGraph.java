@@ -640,6 +640,18 @@ public class StreamGraph implements Pipeline {
                 intermediateDataSetId);
     }
 
+    /**
+     * 添加StreamEdge的具体实现类
+     * 递归调用
+     * @param upStreamVertexID 输入的id
+     * @param downStreamVertexID 当前transformationId
+     * @param typeNumber
+     * @param partitioner
+     * @param outputNames
+     * @param outputTag
+     * @param exchangeMode
+     * @param intermediateDataSetId
+     */
     private void addEdgeInternal(
             Integer upStreamVertexID,
             Integer downStreamVertexID,
@@ -650,6 +662,7 @@ public class StreamGraph implements Pipeline {
             StreamExchangeMode exchangeMode,
             IntermediateDataSetID intermediateDataSetId) {
 
+        // 当上游时sideOutput时，递归调用，并传入sideOutput信息
         if (virtualSideOutputNodes.containsKey(upStreamVertexID)) {
             int virtualId = upStreamVertexID;
             upStreamVertexID = virtualSideOutputNodes.get(virtualId).f0;
@@ -665,10 +678,13 @@ public class StreamGraph implements Pipeline {
                     outputTag,
                     exchangeMode,
                     intermediateDataSetId);
+            // 当上游是partition时，递归调用，并传入partitioner信息
         } else if (virtualPartitionNodes.containsKey(upStreamVertexID)) {
             int virtualId = upStreamVertexID;
             upStreamVertexID = virtualPartitionNodes.get(virtualId).f0;
             if (partitioner == null) {
+                // 如果一开始没有定义partitioner，那么传入上游算子的先前定义的分区器，
+                // 如keyby算子的分区器就是KeyGroupStreamPartitioner
                 partitioner = virtualPartitionNodes.get(virtualId).f1;
             }
             exchangeMode = virtualPartitionNodes.get(virtualId).f2;
@@ -681,6 +697,7 @@ public class StreamGraph implements Pipeline {
                     outputTag,
                     exchangeMode,
                     intermediateDataSetId);
+            // 不是以上逻辑转换的情况，真正构建StreamEdge
         } else {
             createActualEdge(
                     upStreamVertexID,
@@ -706,6 +723,7 @@ public class StreamGraph implements Pipeline {
 
         // If no partitioner was specified and the parallelism of upstream and downstream
         // operator matches use forward partitioning, use rebalance otherwise.
+        // 没有指定partitioner时，根据上下游的并行度决定，会为其选择forward或者reblance分区
         if (partitioner == null
                 && upstreamNode.getParallelism() == downstreamNode.getParallelism()) {
             partitioner =
@@ -741,9 +759,10 @@ public class StreamGraph implements Pipeline {
          * self unioning a {@link DataStream}) are distinct and unique. Otherwise it would be
          * difficult on the {@link StreamTask} to assign {@link RecordWriter}s to correct {@link
          * StreamEdge}.
+         * 这个uniqueId确保链接相同节点的StreamEdge是唯一的，否则StreamTask很难分配RecordWriter来纠正StreamEdge
          */
         int uniqueId = getStreamEdges(upstreamNode.getId(), downstreamNode.getId()).size();
-
+        // 创建StreamEdge，并将该StreamEdge添加到上游的输出，下游的输出
         StreamEdge edge =
                 new StreamEdge(
                         upstreamNode,

@@ -31,6 +31,14 @@ import static org.apache.flink.util.Preconditions.checkState;
  * intermediate operation.
  *
  * <p>Intermediate data sets may be read by other operators, materialized, or discarded.
+ *
+ * <p>中 间 数 据 集 IntermediateDataSet 是 一 种 逻 辑 结 构 ， 用 来 表 示
+ * JobVertex的输出，即该JobVertex中包含的算子会产生的数据集。不
+ * 同的执行模式下，其对应的结果分区类型不同，决定了在执行时刻数
+ * 据交换的模式</p>
+ *
+ * <p>IntermediateDataSet的个数与该JobVertext对应的StreamNode的
+ * 出边数量相同，可以是一个或者多个。</p>
  */
 public class IntermediateDataSet implements java.io.Serializable {
 

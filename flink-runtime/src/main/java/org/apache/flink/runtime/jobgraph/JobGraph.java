@@ -65,6 +65,12 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * <p>The JobGraph defines the job-wide configuration settings, while each vertex and intermediate
  * result define the characteristics of the concrete operation and intermediate data.
+ *
+ * <p>在JobGraph中实现了流和批的统一表达。从JobGraph的图里可以
+ * 看到，数据从上一个算子流到下一个算子的过程中，上游作为生产者
+ * 提供了中间数据集（IntermediateDataSet），而下游作为消费者需要
+ * JobEdge。JobEdge是一个通信管道，连接了上游生产的中间数据集和
+ * 下游的JobVertex节点。</p>
  */
 public class JobGraph implements Serializable {
 

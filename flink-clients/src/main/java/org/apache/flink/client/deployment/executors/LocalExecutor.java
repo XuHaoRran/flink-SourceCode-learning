@@ -91,6 +91,8 @@ public class LocalExecutor implements PipelineExecutor {
         // This is a quirk in how LocalEnvironment used to work. It sets the default parallelism
         // to <num taskmanagers> * <num task slots>. Might be questionable but we keep the behaviour
         // for now.
+
+        // 如果pipeline instanceof Plan，而不是instanceof StreamGraph
         if (pipeline instanceof Plan) {
             Plan plan = (Plan) pipeline;
             final int slotsPerTaskManager =

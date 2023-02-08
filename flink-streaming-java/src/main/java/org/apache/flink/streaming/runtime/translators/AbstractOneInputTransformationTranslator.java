@@ -73,7 +73,7 @@ abstract class AbstractOneInputTransformationTranslator<IN, OUT, OP extends Tran
             TypeSerializer<?> keySerializer = stateKeyType.createSerializer(executionConfig);
             streamGraph.setOneInputStateKey(transformationId, stateKeySelector, keySerializer);
         }
-
+        // 定义并行度
         int parallelism =
                 transformation.getParallelism() != ExecutionConfig.PARALLELISM_DEFAULT
                         ? transformation.getParallelism()

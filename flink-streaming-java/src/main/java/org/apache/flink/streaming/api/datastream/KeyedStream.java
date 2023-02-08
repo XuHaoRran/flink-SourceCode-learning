@@ -131,7 +131,7 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
                 dataStream,
                 new PartitionTransformation<>(
                         dataStream.getTransformation(),
-                        new KeyGroupStreamPartitioner<>(
+                        new KeyGroupStreamPartitioner<>(    // 使用keyby时，创建一个keyGroupStreamPartitioner来分区，
                                 keySelector,
                                 StreamGraphGenerator.DEFAULT_LOWER_BOUND_MAX_PARALLELISM)),
                 keySelector,
@@ -142,7 +142,8 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
      * Creates a new {@link KeyedStream} using the given {@link KeySelector} and {@link
      * TypeInformation} to partition operator state by key, where the partitioning is defined by a
      * {@link PartitionTransformation}.
-     *
+     * <p>使用给定的KeySelector和TypeInformation创建一个新的KeyedStream，以按键划分运算符状态，
+     * 其中分区由PartitionTransformation定义。</p>
      * @param stream Base stream of data
      * @param partitionTransformation Function that determines how the keys are distributed to
      *     downstream operator(s)
@@ -152,7 +153,7 @@ public class KeyedStream<T, KEY> extends DataStream<T> {
     @Internal
     KeyedStream(
             DataStream<T> stream,
-            PartitionTransformation<T> partitionTransformation,
+            PartitionTransformation<T> partitionTransformation, //
             KeySelector<T, KEY> keySelector,
             TypeInformation<KEY> keyType) {
 

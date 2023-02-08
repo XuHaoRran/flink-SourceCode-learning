@@ -74,7 +74,7 @@ public final class FlinkPipelineTranslationUtil {
     private static FlinkPipelineTranslator getPipelineTranslator(
             ClassLoader userClassloader, Pipeline pipeline) {
         PlanTranslator planTranslator = new PlanTranslator();
-
+        // 判断pipeline是否Plan
         if (planTranslator.canTranslate(pipeline)) {
             return planTranslator;
         }

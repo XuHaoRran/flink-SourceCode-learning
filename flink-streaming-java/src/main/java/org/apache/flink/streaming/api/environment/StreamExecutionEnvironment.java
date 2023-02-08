@@ -2190,6 +2190,7 @@ public class StreamExecutionEnvironment implements AutoCloseable {
 
         // 执行作业
         CompletableFuture<JobClient> jobClientFuture =
+                // 传递streamGraph当作Pipeline
                 executor.execute(streamGraph, configuration, userClassloader);
 
         try {

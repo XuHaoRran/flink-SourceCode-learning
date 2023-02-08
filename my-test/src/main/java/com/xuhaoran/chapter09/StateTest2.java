@@ -18,7 +18,7 @@ public class StateTest2 {
                 .keyBy(0)
                 .flatMap(new CountWindowAverage())
                 .print();
-
+        // LocalStreamEvironment
         env.execute();
     }
 }
