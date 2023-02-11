@@ -55,6 +55,25 @@ import static org.apache.flink.util.Preconditions.checkState;
 /**
  * The ExecutionVertex is a parallel subtask of the execution. It may be executed once, or several
  * times, each of which time it spawns an {@link Execution}. ExecutionGraph中ExecutionVertex表示并行实例
+ *
+ * <p>
+ * ExecutionJobVertex中会对作业进行并行化处理，构造可以并行
+ * 执行的实例，每一个并行执行的实例就是ExecutionVertex。
+ * </p>
+ *
+ * <p>
+ * 构造ExecutionVertex的同时，也会构建ExecutionVertex的输出
+ * IntermediateResult。 并 且 将 ExecutionEdge 输 出 为
+ * IntermediateResultPartition。
+ * </p>
+ *
+ * <p>
+ * ExecutionVertex 的 构 造 函 数 中 ， 首 先 会 创 建
+ * IntermediateResultPartition ， 并 通 过
+ * IntermediateResult.setPartition （ ） 建 立 IntermediateResult 和
+ * IntermediateResultPartition之间的关系；然后生成Execution，并
+ * 配置资源相关。
+ * </p>
  */
 public class ExecutionVertex
         implements AccessExecutionVertex, Archiveable<ArchivedExecutionVertex> {
@@ -123,7 +142,7 @@ public class ExecutionVertex
                         jobVertex.getParallelism());
 
         this.resultPartitions = new LinkedHashMap<>(producedDataSets.length, 1);
-
+        // 开始深入IntermediateResult，对于每个中间输出创造IntermediateResultPartition
         for (IntermediateResult result : producedDataSets) {
             IntermediateResultPartition irp =
                     new IntermediateResultPartition(
@@ -144,7 +163,7 @@ public class ExecutionVertex
         this.inputSplits = new ArrayList<>();
 
         this.currentExecution = createNewExecution(createTimestamp);
-
+        // 注册这个Task的Execution的
         getExecutionGraphAccessor().registerExecution(currentExecution);
     }
 

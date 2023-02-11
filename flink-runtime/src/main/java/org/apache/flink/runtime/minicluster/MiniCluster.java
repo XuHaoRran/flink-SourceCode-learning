@@ -356,6 +356,7 @@ public class MiniCluster implements AutoCloseableAsync {
 
                 if (useSingleRpcService) {
                     // we always need the 'commonRpcService' for auxiliary calls
+                    // 在这里创造localRpcService
                     commonRpcService = createLocalRpcService(configuration, rpcSystem.deref());
                     final CommonRpcServiceFactory commonRpcServiceFactory =
                             new CommonRpcServiceFactory(commonRpcService);
@@ -423,16 +424,16 @@ public class MiniCluster implements AutoCloseableAsync {
                                 new ExecutorThreadFactory("mini-cluster-io"));
 
                 haServicesFactory = createHighAvailabilityServicesFactory(configuration);
-
+                // 生成高可用实例
                 haServices = createHighAvailabilityServices(configuration, ioExecutor);
-
+                // 启动blob服务器
                 blobServer =
                         BlobUtils.createBlobServer(
                                 configuration,
                                 Reference.borrowed(workingDirectory.getBlobStorageDirectory()),
                                 haServices.createBlobStore());
                 blobServer.start();
-
+                // 心跳机制
                 heartbeatServices = HeartbeatServices.fromConfiguration(configuration);
 
                 delegationTokenManager =
@@ -744,6 +745,13 @@ public class MiniCluster implements AutoCloseableAsync {
      * with the next index which is the number of TaskManagers, started so far. The index always
      * increases with each new started TaskManager. The indices of terminated TaskManagers are not
      * reused after {@link #terminateTaskManager(int)}.
+     *
+     * <p>
+     * 当MiniCluster启动时，它总是启动MiniClusterConfiguration.getNumTaskManagers TaskManagers。
+     * 所有TaskManager的索引从0到TaskManager的数量，从目前开始，减去1。此方法使用下一个索引启动TaskManager，
+     * 该索引是到目前为止启动的TaskManager的数量。索引总是随着新启动的TaskManager而增加。
+     * 终止的TaskManager的索引在terminateTaskManager（int）后不会重用
+     * </p>
      */
     public void startTaskManager() throws Exception {
         synchronized (lock) {
@@ -1076,6 +1084,7 @@ public class MiniCluster implements AutoCloseableAsync {
     private CompletableFuture<Void> uploadAndSetJobFiles(
             final CompletableFuture<InetSocketAddress> blobServerAddressFuture,
             final JobGraph job) {
+        // 从给定JobGraph中提取执行所需的所有文件，并使用给定供应商的BlobClient上载这些文件。
         return blobServerAddressFuture.thenAccept(
                 blobServerAddress -> {
                     try {

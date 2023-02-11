@@ -281,7 +281,7 @@ public class DefaultExecutionGraph implements ExecutionGraph, InternalExecutionG
 
     private final ExecutionDeploymentListener executionDeploymentListener;
     private final ExecutionStateUpdateListener executionStateUpdateListener;
-
+    // 用来管理task之间的edge
     private final EdgeManager edgeManager;
 
     private final Map<ExecutionVertexID, ExecutionVertex> executionVerticesById;
@@ -845,8 +845,9 @@ public class DefaultExecutionGraph implements ExecutionGraph, InternalExecutionG
                 verticesToAttach.size(),
                 tasks.size(),
                 intermediateResults.size());
-
+        // 构建ExecutionGraph的核心方法
         attachJobVertices(verticesToAttach);
+        // 初始化vertex
         initializeJobVertices(verticesToInitialize);
 
         // the topology assigning should happen before notifying new vertices to failoverStrategy
@@ -858,13 +859,13 @@ public class DefaultExecutionGraph implements ExecutionGraph, InternalExecutionG
 
     /** Attach job vertices without initializing them. */
     private void attachJobVertices(List<JobVertex> topologicallySorted) throws JobException {
-        // 遍历每一个JobVertex
+        // 遍历每一个排序好的JobVertex
         for (JobVertex jobVertex : topologicallySorted) {
 
             if (jobVertex.isInputVertex() && !jobVertex.isStoppable()) {
                 this.isStoppable = false;
             }
-
+            // 这个节点的并行度信息
             VertexParallelismInformation parallelismInfo =
                     parallelismStore.getParallelismInfo(jobVertex.getID());
 
@@ -901,7 +902,8 @@ public class DefaultExecutionGraph implements ExecutionGraph, InternalExecutionG
             throws JobException {
 
         checkNotNull(ejv);
-
+        // 深入到ExecutionJobVertex到ExecutionVertex转换，数量与这个节点并行度相关
+        // IntermediateResult的生成，转换成IntermediateResultPartition
         ejv.initialize(
                 executionHistorySizeLimit,
                 rpcTimeout,

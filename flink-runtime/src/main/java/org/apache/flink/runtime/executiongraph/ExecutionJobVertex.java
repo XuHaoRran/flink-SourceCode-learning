@@ -78,6 +78,28 @@ import static org.apache.flink.util.Preconditions.checkState;
  *
  * <p>The {@code ExecutionJobVertex} corresponds to a parallelized operation. It contains an {@link
  * ExecutionVertex} for each parallel instance of that operation.
+ *
+ * <p>
+ * 该对象和JobGraph中的JobVertex一一对应。该对象还包含一组
+ * ExecutionVertex，数量与该JobVertex中所包含的StreamNode的并行
+ * 度一致，假设StreamNode的并行度为5，那么该ExecutionJobVertex中
+ * 也会包含5个ExecutionVertex。
+ * </p>
+ *
+ * <p>
+ * ExecutionJobVertex 用 来 将 一 个 JobVertex 封 装 成
+ * ExecutionJobVertex ， 并 依 次 创 建 ExecutionVertex 、 Execution 、
+ * IntermediateResult 和 IntermediateResultPartition ， 用 于 丰 富
+ * ExecutionGraph。
+ * </p>
+ *
+ * <p>
+ * 在 ExecutionJobVertex 的 构 造 函 数 中 ， 首 先 是 依 据 对 应 的
+ * JobVertex的并发度，生成对应个数的ExecutionVertex。其中，一个
+ * ExecutionVertex代表一个ExecutionJobVertex的并发子Task。然后是
+ * 将 原 来 JobVertex 的 中 间 结 果 IntermediateDataSet 转 化 为
+ * ExecutionGraph中的IntermediateResult。
+ * </p>
  */
 public class ExecutionJobVertex
         implements AccessExecutionJobVertex, Archiveable<ArchivedExecutionJobVertex> {
@@ -173,7 +195,7 @@ public class ExecutionJobVertex
         // create the intermediate results
         this.producedDataSets =
                 new IntermediateResult[jobVertex.getNumberOfProducedIntermediateDataSets()];
-
+        // 初始化IntermediateResult，这个JobVertex有多少个中间输出，就初始化多少个
         for (int i = 0; i < jobVertex.getProducedDataSets().size(); i++) {
             final IntermediateDataSet result = jobVertex.getProducedDataSets().get(i);
 
@@ -232,6 +254,7 @@ public class ExecutionJobVertex
         }
 
         // set up the input splits, if the vertex has any
+        // 对可切分的数据源进行输入切分（InputSplit）
         try {
             @SuppressWarnings("unchecked")
             InputSplitSource<InputSplit> splitSource =
@@ -437,6 +460,56 @@ public class ExecutionJobVertex
 
     // ---------------------------------------------------------------------------------------------
 
+    /**
+     * 创 建 ExecutionEdge将
+     * ExecutionVertex和IntermediateResult关联起来，为运行时建立Task
+     * 之间的数据交换就是以此为基础建立数据的物理传输通道的。
+     *
+     * <p>连 接 过 程 中 ， 根 据 JobEdge 的 DistributionPattern 属 性 创 建
+     * ExecutionEdge ， 将 ExecutionVertex 和 上 游 的
+     * IntermediateResultPartition连接起来。
+     * <p>连 接 策 略 有 两 种 ： DistributionPattern.POINTWISE （ 点 对 点 连
+     * 接）和DistributionPattern.ALL_TO_ALL（全连接）。
+     * <p>（1）点对点连接
+     * <p>即 DistributionPattern.POINTWISE ， 该 策 略 用 来 连 接 当 前
+     * ExecutionVertex与上游的IntermediateResultPartition。
+     * <p>上 游 IntermediateResult 的 分 区 数 记 做 numSources ， 该
+     * ExecutionJobVertex的并发度记做parallelism。
+     * <p>连接一共分3种情况。
+     * <p>1）一对一连接。numSources == parallism，即并发的Task数量
+     * 与分区数相等，则一对一进行连接
+     * <p>连 接 过 程 中 ， 根 据 JobEdge 的 DistributionPattern 属 性 创 建
+     * ExecutionEdge ， 将 ExecutionVertex 和 上 游 的
+     * IntermediateResultPartition连接起来。
+     * <p>连 接 策 略 有 两 种 ： DistributionPattern.POINTWISE （ 点 对 点 连
+     * 接）和DistributionPattern.ALL_TO_ALL（全连接）。
+     * <p>（1）点对点连接
+     * <p>即 DistributionPattern.POINTWISE ， 该 策 略 用 来 连 接 当 前
+     * ExecutionVertex与上游的IntermediateResultPartition。
+     * <p>上 游 IntermediateResult 的 分 区 数 记 做 numSources ， 该
+     * ExecutionJobVertex的并发度记做parallelism。
+     * <p>连接一共分3种情况。
+     * <p>1）一对一连接。numSources == parallism，即并发的Task数量
+     * 与分区数相等，则一对一进行连接，如图8-11所示。
+     * <p>b）numSources % parallelism != 0，即每个Task消费的上游结
+     * 果分区数量不均，如上游有3个结果分区，下游有两个Task，那么一个
+     * Task分配两个结果分区消费，另一个Task分配1个Task消费，如图8-13
+     * 所示。
+     * <p>3）一对多连接。parallelism>numSources，即下游的Task数量多
+     * 于上游的分区数，此时分为两种情况:
+     * <p>a） parallelism % numSources == 0，即每个结果分区的下游消
+     * 费Task数据量相同，如上游有两个结果分区，下游有4个Task，每个结
+     * 果分区被两个Task消费，如图8-14所示。
+     * <p>b）parallelism %numSources != 0，即每个结果分区的下游消费
+     * Task数据量不相同，如上游有两个结果分区，下游有3个Task，那么1
+     * 个结果分区分配两个Task消费，另一个结果分区分配1个Task消费
+     * <p>（2）全连接
+     * <p> 即 DistributionPattern.ALL_TO_ALL ， 在 该 策 略 下 游 的
+     * ExecutionVertex与上游的所有IntermediateResultPartition建立连
+     * 接，消费其产生的数据。一般全连接的情况意味着数据在Shuffle，
+     * @param intermediateDataSets
+     * @throws JobException
+     */
     public void connectToPredecessors(
             Map<IntermediateDataSetID, IntermediateResult> intermediateDataSets)
             throws JobException {
@@ -486,6 +559,7 @@ public class ExecutionJobVertex
             }
 
             this.inputs.add(ires);
+            // 创建链接，策略是POINWISE和ALL_TO_ALL，可参考《Flink内核原理与实现》（P261）
 
             EdgeManagerBuildUtil.connectVertexToResult(this, ires, edge.getDistributionPattern());
         }

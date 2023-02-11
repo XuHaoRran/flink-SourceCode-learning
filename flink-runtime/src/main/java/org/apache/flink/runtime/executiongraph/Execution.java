@@ -110,6 +110,15 @@ import static org.apache.flink.util.Preconditions.checkState;
  * therefore use atomic state updates and occasional double-checking to ensure that the state after
  * a completed call is as expected, and trigger correcting actions if it is not. Many actions are
  * also idempotent (like canceling).
+ *
+ *
+ * <p>ExecutionVertex相当于每个Task的模板，在真正执行的时候，会
+ * 将 ExecutionVerterx 中 的 信 息 包 装 为 1 个 Execution ， 执 行 一 个
+ * ExecutionVertex 的 一 次 尝 试 。 JobManager 和 TaskManager 之 间 关 于
+ * Task的部署和Task执行状态的更新都是通过ExecutionAttemptID来标
+ * 识实例的。在发生故障或者数据需要重算的情况下，ExecutionVertex
+ * 可 能 会 有 多 个 ExecutionAttemptID 。 一 个 Execution 通 过
+ * ExecutionAttemptID来唯一标识。
  */
 public class Execution
         implements AccessExecution, Archiveable<ArchivedExecution>, LogicalSlot.Payload {

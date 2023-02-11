@@ -497,6 +497,7 @@ public class EmbeddedLeaderService {
         @Override
         public void start(LeaderRetrievalListener listener) throws Exception {
             checkNotNull(listener);
+            // 添加监听器的
             addListener(this, listener);
         }
 

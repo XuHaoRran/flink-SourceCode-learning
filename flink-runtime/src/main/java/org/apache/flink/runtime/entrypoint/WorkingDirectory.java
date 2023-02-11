@@ -26,6 +26,7 @@ import java.io.IOException;
 /**
  * Class that manages a working directory for a process/instance. When being instantiated, this
  * class makes sure that the specified working directory exists.
+ * 用于管理进程/实例的工作目录。实例化时，此类确保指定的工作目录存在。
  */
 public class WorkingDirectory {
     private final File root;
@@ -35,6 +36,7 @@ public class WorkingDirectory {
     private final File slotAllocationSnapshotDirectory;
 
     private WorkingDirectory(File root) throws IOException {
+        // C:\Users\xuhaoran\AppData\Local\Temp\minicluster_cd0550adb8f2293a14963751c935e2c8 windows状态下
         this.root = root;
         createDirectory(root);
 

@@ -31,6 +31,10 @@ import java.util.Set;
 
 import static org.apache.flink.util.Preconditions.checkState;
 
+/**
+ * IntermediateResultPartition 又 叫 作 中 间 结 果 分 区 ， 表 示 1 个
+ * ExecutionVertex输出结果，与ExecutionEdge相关联。
+ */
 public class IntermediateResultPartition {
 
     private static final int UNKNOWN = -1;

@@ -560,7 +560,7 @@ public class StreamingJobGraphGenerator {
         for (Map.Entry<Integer, List<StreamEdge>> inEdges : physicalInEdgesInOrder.entrySet()) {
             int vertex = inEdges.getKey();
             List<StreamEdge> edgeList = inEdges.getValue();
-
+            // 加入IN物理边
             vertexConfigs.get(vertex).setInPhysicalEdges(edgeList);
         }
     }
@@ -1199,6 +1199,7 @@ public class StreamingJobGraphGenerator {
 
         downStreamConfig.setNumberOfNetworkInputs(downStreamConfig.getNumberOfNetworkInputs() + 1);
 
+        // 获取output的partitioner
         StreamPartitioner<?> partitioner = output.getPartitioner();
         ResultPartitionType resultPartitionType = output.getPartitionType();
 
@@ -1508,6 +1509,9 @@ public class StreamingJobGraphGenerator {
      * Maps a vertex to its region slot sharing group. If {@link
      * StreamGraph#isAllVerticesInSameSlotSharingGroupByDefault()} returns true, all regions will be
      * in the same slot sharing group.
+     *
+     * 将顶点映射到其区域槽共享组。如果StreamGraph.isAllVerticesIameSlotSharingGroupByDefault（）返回true，
+     * 则所有区域都将位于同一插槽共享组中。
      */
     private Map<JobVertexID, SlotSharingGroup> buildVertexRegionSlotSharingGroups() {
         final Map<JobVertexID, SlotSharingGroup> vertexRegionSlotSharingGroups = new HashMap<>();
@@ -1515,7 +1519,7 @@ public class StreamingJobGraphGenerator {
         streamGraph
                 .getSlotSharingGroupResource(StreamGraphGenerator.DEFAULT_SLOT_SHARING_GROUP)
                 .ifPresent(defaultSlotSharingGroup::setResourceProfile);
-
+        // 获取默认情况下是否将所有顶点放入同一槽共享组
         final boolean allRegionsInSameSlotSharingGroup =
                 streamGraph.isAllVerticesInSameSlotSharingGroupByDefault();
 
@@ -1532,7 +1536,7 @@ public class StreamingJobGraphGenerator {
                                 StreamGraphGenerator.DEFAULT_SLOT_SHARING_GROUP)
                         .ifPresent(regionSlotSharingGroup::setResourceProfile);
             }
-
+            // 将region下面的所有vertices放到vertexRegionSlotSharingGroups，这个时候已经将操作分好slot了
             for (LogicalVertex vertex : region.getVertices()) {
                 vertexRegionSlotSharingGroups.put(vertex.getId(), regionSlotSharingGroup);
             }

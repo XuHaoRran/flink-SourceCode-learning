@@ -102,7 +102,7 @@ public class DefaultDispatcherResourceManagerComponentFactory
 
     /*
      * create方法实际上构造并启动了包括派发器、资源管理器在内的多个组件
-     * 与派发器有挂你的核心逻辑主要包括
+     * 与派发器有关的核心逻辑主要包括:
      * 1.构造派发器的LeaderRetrievalService对象
      * 2.构造派发器的LeaderGatewayRetriever对象
      * 3.构造DispatcherRunner对象

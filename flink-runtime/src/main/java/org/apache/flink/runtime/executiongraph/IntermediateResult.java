@@ -42,6 +42,18 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
 
+/**
+ * IntermediateResult又叫作中间结果集，该对象是个逻辑概念，
+ * 表 示 ExecutionJobVertex 的 输 出 ， 和 JobGraph 中 的
+ * IntermediateDataSet一一对应，同样，一个ExecutionJobVertex可以
+ * 有多个中间结果，取决于当前JobVertex有几个出边（JobEdge）。
+ *
+ * <p>
+ * 一 个 中 间 结 果 集 包 含 多 个 中 间 结 果 分 区
+ * IntermediateResultPartition ， 其 个 数 等 于 该 Job Vertext 的 并 发
+ * 度，或者叫作算子的并行度。
+ * </p>
+ */
 public class IntermediateResult {
 
     private final IntermediateDataSet intermediateDataSet;

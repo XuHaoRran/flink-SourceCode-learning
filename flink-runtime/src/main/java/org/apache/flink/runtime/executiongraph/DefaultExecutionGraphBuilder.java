@@ -192,6 +192,7 @@ public class DefaultExecutionGraphBuilder {
                 (System.nanoTime() - initMasterStart) / 1_000_000);
 
         // topologically sort the job vertices and attach the graph to the existing one
+        // 对JobGraph中的JobVertex节点进行拓扑排序，得到List<JobVetex>
         List<JobVertex> sortedTopology = jobGraph.getVerticesSortedTopologicallyFromSources();
         if (log.isDebugEnabled()) {
             log.debug(
@@ -200,7 +201,9 @@ public class DefaultExecutionGraphBuilder {
                     jobName,
                     jobId);
         }
-        // 根据jobGraph中的节点信息填充ExecutionGraph中的字段值
+        // 根据jobGraph中的节点信息填充ExecutionGraph中的字段值(核心方法)
+        // 1.构 造 ExecutionGraph 的 节 点 ， 将 JobVertex 封 装 成ExecutionJobVertex。
+        // 2.构造ExecutionEdge，建立ExecutionGraph节点之间的相互联系，把节点通过ExecutionEdge
         executionGraph.attachJobGraph(sortedTopology);
 
         if (log.isDebugEnabled()) {

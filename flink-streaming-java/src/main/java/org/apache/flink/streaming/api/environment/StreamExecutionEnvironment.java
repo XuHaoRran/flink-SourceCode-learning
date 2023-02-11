@@ -2080,6 +2080,7 @@ public class StreamExecutionEnvironment implements AutoCloseable {
             // 获取并返回JobEexcutionResult对象，触发监听器。通过这个对象，就可以获取累加器等对象
             final JobExecutionResult jobExecutionResult;
 
+            // 返回job执行结果
             if (configuration.getBoolean(DeploymentOptions.ATTACHED)) {
                 jobExecutionResult = jobClient.getJobExecutionResult().get();
             } else {

@@ -71,7 +71,7 @@ public abstract class FileOutputFormat<IT> extends RichOutputFormat<IT>
     /**
      * Initialize defaults for output format. Needs to be a static method because it is configured
      * for local cluster execution.
-     *
+     * 初始化输出格式的默认值。需要是静态方法，因为它是为本地群集执行而配置的。
      * @param configuration The configuration to load defaults from
      */
     public static void initDefaultsFromConfiguration(Configuration configuration) {
