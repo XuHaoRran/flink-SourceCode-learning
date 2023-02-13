@@ -35,6 +35,14 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * Input reader for {@link org.apache.flink.streaming.runtime.tasks.OneInputStreamTask}.
  *
+ * <p>以 StreamOneInputProcessor 为 例 ， 核 心 方 法 是
+ * StreamOneInputProcessor#processInput （ ） ， 该 方 法 中 调 用
+ * StreamTaskInput#emit 触 发 数 据 的 读 取 ， 将 数 据 反 序 列 化 为
+ * StreamRecord ， 交 给 StreamTaskNetworkOutput ， 由 其 触 发
+ * StreamOperator （ 算 子 ） 的 处 理 ， 最 终 触 发 UDF 的
+ * processElemen（），执行用户在DataStream API中编写用户逻辑，处
+ * 理数据，然后交给下游
+ *
  * @param <IN> The type of the record that can be read with this record reader.
  */
 @Internal

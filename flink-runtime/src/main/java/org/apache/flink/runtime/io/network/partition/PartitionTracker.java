@@ -25,6 +25,11 @@ import java.util.Collection;
  * <p>This interface deliberately does not have a method to start tracking partitions, so that
  * implementation are flexible in their definitions for this method (otherwise one would end up with
  * multiple methods, with one part likely being unused).
+ *
+ * <p>结果分区跟踪器（PartitionTracker）跟踪非Pipelined模式的分
+ * 区，其实就是跟踪批处理中的结果分区，当结果分区消费完之后，具
+ * 备结果分区释放条件时，向TaskExecutor和ShuffleMaster发出释放请
+ * 求。
  */
 public interface PartitionTracker<K, M> {
 

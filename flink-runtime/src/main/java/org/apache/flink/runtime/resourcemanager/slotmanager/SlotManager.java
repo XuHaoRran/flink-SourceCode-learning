@@ -45,6 +45,25 @@ import java.util.concurrent.Executor;
  * <p>In order to free resources and avoid resource leaks, idling task managers (task managers whose
  * slots are currently not used) and pending slot requests time out triggering their release and
  * failure, respectively.
+ *
+ * <p>Slot管理器在Flink中叫作SlotManager，是ResourceManager的组
+ * 件，从全局角度维护当前有多少TaskManager、每个TaskManager有多
+ * 少空闲的Slot和Slot等资源的使用情况。当Flink作业调度执行时，根
+ * 据Slot分配策略为Task分配执行的位置。
+ *
+ * <p>SlotManager虽然是ResourceManager的组件，但是其逻辑是通用
+ * 的 ， 并 不 关 心 到 底 使 用 了 哪 种 资 源 集 群 。 面 向 不 同 的 对 象 ，
+ * SlotManager提供不同的功能：
+ * <ul>
+ *     <li>1）对TaskManager提供注册、取消注册、空闲退出等管理动作，
+ * 注册则集群可用的Slot变多，取消注册、空闲推出则释放资源，还给
+ * 资源管理集群。
+ *      <li>2）对Flink作业，接收Slot的请求和释放、资源汇报等。当资源
+ * 不足的时候，SlotManger将资源请求暂存在等待队列中，SlotManager
+ * 通 知 ResourceManager 去 申 请 更 多 的 资 源 ， 启 动 新 的 TaskManager ，
+ * TaskManager注册到SlotManager之后，SlotManager就有可用的新资源
+ * 了，从等待队列中依次分配资源。
+ * </ul>
  */
 public interface SlotManager extends AutoCloseable {
     int getNumberRegisteredSlots();

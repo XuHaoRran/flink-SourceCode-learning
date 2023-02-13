@@ -36,6 +36,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * <p>This implementation has no dependencies on any external services. It returns a fix
  * pre-configured ResourceManager and JobManager, and stores checkpoints and metadata simply on the
  * heap or on a local file system and therefore in a storage without guarantees.
+ *
+ * <p>基于内存和本地文件系统实现高可用服务，能在一定程度上实现
+ * 高可用，在物理硬件故障的情况下，可能无法达到高可用的预期，所
+ * 以多用在测试场景中
  */
 public class StandaloneHaServices extends AbstractNonHaServices {
 

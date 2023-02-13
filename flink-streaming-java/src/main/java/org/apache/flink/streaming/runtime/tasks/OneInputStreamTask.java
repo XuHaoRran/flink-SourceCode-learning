@@ -116,7 +116,10 @@ public class OneInputStreamTask<IN, OUT> extends StreamTask<OUT, OneInputStreamO
                     .getMetricGroup()
                     .getIOMetricGroup()
                     .reuseRecordsInputCounter(numRecordsIn);
-
+            // 初始化StreamInputProcessor，将 输 入
+            //（ StreamTaskNetworkInput ） 、 算 子 处 理 数 据 、 输 出
+            //（StreamTaskNetworkOutput）关联起来，形成StreamTask的数据处理
+            //的完整通道。
             inputProcessor = new StreamOneInputProcessor<>(input, output, operatorChain);
         }
         mainOperator
@@ -230,6 +233,8 @@ public class OneInputStreamTask<IN, OUT> extends StreamTask<OUT, OneInputStreamO
         public void emitRecord(StreamRecord<IN> record) throws Exception {
             numRecordsIn.inc();
             operator.setKeyContextElement(record);
+            //  由算子去执行用户编写的业务逻辑，以
+            //  WordCount示例中的flatMap处理，调用flatMap方法执行用户编写的具体业务逻辑，
             operator.processElement(record);
         }
 

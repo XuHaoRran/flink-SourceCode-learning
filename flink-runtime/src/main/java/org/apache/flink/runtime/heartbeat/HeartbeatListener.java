@@ -24,10 +24,16 @@ import org.apache.flink.runtime.clusterframework.types.ResourceID;
  * Interface for the interaction with the {@link HeartbeatManager}. The heartbeat listener is used
  * for the following things:
  *
+ * <p>心跳监听器是和HeartbeatManager密切相关的接口，可以看成服
+ * 务的输出。
+ *
+ * <p>JobMaster、ResourceManager、TaskManager都实现了该接口，心
+ * 跳超时时触发异常处理。
+ *
  * <ul>
- *   <li>Notifications about heartbeat timeouts
- *   <li>Payload reports of incoming heartbeats
- *   <li>Retrieval of payloads for outgoing heartbeats
+ *   <li>Notifications about heartbeat timeouts 心跳超时通知
+ *   <li>Payload reports of incoming heartbeats 接收心跳信息中的Payload
+ *   <li>Retrieval of payloads for outgoing heartbeats 检索作为心跳响应输出的Payload
  * </ul>
  *
  * @param <I> Type of the incoming payload
@@ -37,7 +43,7 @@ public interface HeartbeatListener<I, O> {
 
     /**
      * Callback which is called if a heartbeat for the machine identified by the given resource ID
-     * times out.
+     * times out. 心跳超时会调用该方法
      *
      * @param resourceID Resource ID of the machine whose heartbeat has timed out
      */
@@ -55,6 +61,8 @@ public interface HeartbeatListener<I, O> {
      * Callback which is called whenever a heartbeat with an associated payload is received. The
      * carried payload is given to this method.
      *
+     * 接受到有关心跳的Payload就会执行该方法
+     *
      * @param resourceID Resource ID identifying the sender of the payload
      * @param payload Payload of the received heartbeat
      */
@@ -62,6 +70,8 @@ public interface HeartbeatListener<I, O> {
 
     /**
      * Retrieves the payload value for the next heartbeat message.
+     *
+     * 检索下一个心跳信息的Payload
      *
      * @param resourceID Resource ID identifying the receiver of the payload
      * @return The payload for the next heartbeat

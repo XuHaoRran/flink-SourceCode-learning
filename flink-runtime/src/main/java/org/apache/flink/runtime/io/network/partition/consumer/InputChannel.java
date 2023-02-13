@@ -41,6 +41,11 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * An input channel consumes a single {@link ResultSubpartitionView}.
  * 每个InputChannel都会消费一个ReusltSubpartition中的数据，InputChannel是一个抽象类
  * 有两个实现类，一个是LocalInputChannel，另外一个是RemoteInputChannel，分别读取本地数据，和远程数据
+ *
+ * <p>输入通道在Flink中叫作InputChannel，每个InputGate会包含一
+ * 个以上的InputChannel，和ExecutionEdge一一对应，也和结果子分区
+ * 一对一相连，即一个InputChannel接收一个结果子分区的输出
+ *
  * <p>For each channel, the consumption life cycle is as follows:
  *
  * <ol>

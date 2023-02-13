@@ -28,7 +28,14 @@ import org.apache.flink.util.AutoCloseableAsync;
 
 import java.util.concurrent.CompletableFuture;
 
-/** Interface for a runner which executes a {@link JobMaster}. */
+/** Interface for a runner which executes a {@link JobMaster}.
+ * <p>用于启动
+ * JobMaster ， 提 供 作 业 级 别 的 leader 选 举 、 处 理 异 常 。 旧 版 本 中
+ * JobManager的作业调度、管理等逻辑现在由JobMaster实现。在之前的
+ * 实 现 中 所 有 的 作 业 共 享 JobManager ， 引 入 JobMaster 之 后 ， 一 个
+ * JobMaster 对 应 于 一 个 作 业 ， 一 个 JobManager 中 可 以 有 多 个
+ * JobMaster，这样的实现能够更好地隔离作业，减少相互影响的可能性。
+ * */
 public interface JobManagerRunner extends AutoCloseableAsync {
 
     /**

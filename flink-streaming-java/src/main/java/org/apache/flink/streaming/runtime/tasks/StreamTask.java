@@ -182,6 +182,25 @@ import static org.apache.flink.util.concurrent.FutureUtils.assertNoException;
  * StreamTask是Taskinvokable类的一个实现类，它也是一个抽象类，是所有流处理任务的基类，它的主要功能就是执行一个或
  * 链接在一起的StreamOperator中的逻辑。在链接在一起的算子中，第一个叫做head operator，StreamTask会根据它的类型
  * 决定自身的实现类的类型。StreamTask常用的实现类包括OneInputStreamTask(表示只有一个输入的任务)、TwoInputStreamTask（表示有两个输入的任务）
+ *
+ * <p>StreamTask的生命周期有3个阶段：初始化、运行、关闭和清理
+ * <ul>初始化
+ *     <li>StateBackend初始化
+ *     <li>时间服务初始化
+ *     <li>构建OperatorChain
+ *     <li>Task初始化
+ *     <li>恢复算子状态
+ *     <li>开启算子
+ * </ul>-》》》
+ * <ul>运行
+ *     <li>循环执行
+ * </ul>-》》》
+ * <ul>关闭和清理
+ *     <li>关闭算子
+ *     <li>销毁算子
+ *     <li>通用清理
+ *     <li>Task清理
+ * </ul>
  * @param <OUT>
  * @param <OP>
  */
@@ -403,6 +422,17 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                     new MailboxProcessor(
                             this::processInput, mailbox, actionExecutor, mailboxMetricsControl);
 
+            /**
+             * --------------------------------------------------------------
+             * 在算子中处理完毕，数据要交给下一个算子或者Task进行计算，此时就会涉及3种算子之间数据传递的情形。
+             * 1）OperatorChain内部的数据传递，发生OperatorChain所在本地线程内。
+             * 2）同一个TaskManager的不同Task之间传递数据，发生在同一个JVM的不同线程之间。
+             * 3）不同TaskManager的Task之间传递数据，即跨JVM的数据传递，需要使用跨网络的通信，
+             * 即便TaskManager位于同一个物理机上      也会使用网络协议进行数据传递。
+             * --------------------------------------------------------------
+             */
+
+
             // Should be closed last.
             resourceCloser.registerCloseable(mailboxProcessor);
 
@@ -432,7 +462,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
             environment.setMainMailboxExecutor(mainMailboxExecutor);
             environment.setAsyncOperationsThreadPool(asyncOperationsThreadPool);
-
+            // 1.StateBackend初始化，这是实现有状态计算和Exactly-Once的关键组件
             this.stateBackend = createStateBackend();
             this.checkpointStorage = createCheckpointStorage(stateBackend);
             this.changelogWriterAvailabilityProvider =
@@ -449,6 +479,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
             environment.setCheckpointStorageAccess(checkpointStorageAccess);
 
             // if the clock is not already set, then assign a default TimeServiceProvider
+            // 时间服务初始化
             if (timerService == null) {
                 this.timerService = createTimerService("Time Trigger for " + getName());
             } else {
@@ -545,7 +576,8 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
      * @throws Exception on any problems in the action.
      */
     protected void processInput(MailboxDefaultAction.Controller controller) throws Exception {
-        // 对数据进行处理，并返回DataInputStatus
+        // StreamInputProcessor是数据读取、处理、输出的高层逻辑的载
+        // 体，由其负责触发数据的读取，并交给算子处理，然后输出，并返回DataInputStatus
         DataInputStatus status = inputProcessor.processInput();
         switch (status) {
             case MORE_AVAILABLE:
@@ -683,7 +715,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
         }
         closedOperators = false;
         LOG.debug("Initializing {}.", getName());
-
+        // 构建OperatorChain，实例化各个算子
         operatorChain =
                 getEnvironment().getTaskStateManager().isTaskDeployedAsFinished()
                         ? new FinishedOperatorChain<>(this, recordWriter)
@@ -696,6 +728,22 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                 .ifPresent(restoreId -> latestReportCheckpointId = restoreId);
 
         // task specific initialization
+        // task初始化
+        // <p>根据Task类型的不同，其初始化略有不同。对于SourceStreamTask而言，主要是启动
+        // SourceFunction开始读取数据，如果支持检查点，则开启检查点。
+        // <p>对 于 OneInputStreamTask 和 TwoInputStreamTask ， 构 建
+        // InputGate ， 包 装 到 StreamTask 的 输 入 组 件 StreamTaskNetworkInput
+        // 中 ， 从 上 游 StreamTask 读 取 数 据 ， 构 建 Task 的 输 出 组 件
+        // StreamTaskNetworkOutput。此处需要注意，StreamTask之间的数据传
+        // 递关系由下游StreamTask负责建立数据传递通道，上游StreamTask只
+        // 负责写入内存。
+        // <p>然 后 初 始 化 StreamInputProcessor ， 将 输 入
+        // （ StreamTaskNetworkInput ） 、 算 子 处 理 数 据 、 输 出
+        // （StreamTaskNetworkOutput）关联起来，形成StreamTask的数据处理
+        // 的完整通道。
+        // <p>之后设置监控指标，使之在运行时能够将各种监控数据与监控模
+        // 块打通。
+
         init();
 
         // save the work of reloading state, etc, if the task is already canceled
@@ -729,7 +777,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                 getEnvironment().getTaskStateManager().getSequentialChannelStateReader();
         reader.readOutputData(
                 getEnvironment().getAllWriters(), !configuration.isGraphContainingLoops());
-
+        // 初始化算子状态并打开算子
         operatorChain.initializeStateAndOpenOperators(createStreamTaskStateInitializer());
 
         IndexedInputGate[] inputGates = getEnvironment().getAllInputGates();
@@ -746,6 +794,9 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
         // We wait for all input channel state to recover before we go into RUNNING state, and thus
         // start checkpointing. If we implement incremental checkpointing of input channel state
         // we must make sure it supports CheckpointType#FULL_CHECKPOINT
+        // 在进入RUNNING状态之前，我们等待所有输入通道状态恢复，从而
+        // 开始检查点。如果我们实现输入通道状态
+        // 的增量检查点，我们必须确保它支持CheckpointType#FULL_CHECKPOINT
         List<CompletableFuture<?>> recoveredFutures = new ArrayList<>(inputGates.length);
         for (InputGate inputGate : inputGates) {
             recoveredFutures.add(inputGate.getStateConsumedFuture());
@@ -784,6 +835,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
 
         // let the task do its work
         getEnvironment().getMetricGroup().getIOMetricGroup().markTaskStart();
+        // 运行这里
         runMailboxLoop();
 
         // if this left the run() method cleanly despite the fact that this was canceled,
@@ -917,6 +969,14 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                 && configuration.isCheckpointingEnabled();
     }
 
+    /**
+     * 当 作 业 取 消 、 异 常 的 时 候 ， 中 止 当 前 的 StreamTask 的 执 行 ，
+     * StreamTask进入关闭与清理阶段
+     * @param throwable iff failure happened during the execution of {@link #restore()} or {@link
+     *     #invoke()}, null otherwise.
+     *     <p>ATTENTION: {@link org.apache.flink.runtime.execution.CancelTaskException
+     * @throws Exception
+     */
     @Override
     public final void cleanUp(Throwable throwable) throws Exception {
         LOG.debug(
@@ -934,7 +994,10 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                 cancelException = t instanceof Exception ? (Exception) t : new Exception(t);
             }
         }
-
+        // 当我们在用户代码之外时，我们不希望在取消时被进一步中断。
+        // 下面的关闭逻辑需要确保它不会发出阻塞和暂停关闭的调用。
+        // 此外，取消监视器将发出一个硬取消（终止TaskManager进程）作为备份，
+        // 以防某些关闭过程超出我们的控制范围。
         disableInterruptOnCancel();
 
         // note: This `.join()` is already uninterruptible, so it doesn't matter if we have already

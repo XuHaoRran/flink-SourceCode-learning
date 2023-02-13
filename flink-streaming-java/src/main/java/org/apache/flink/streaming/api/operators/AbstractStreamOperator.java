@@ -537,6 +537,14 @@ public abstract class AbstractStreamOperator<OUT>
     // ------------------------------------------------------------------------
 
     // ------- One input stream
+
+    /**
+     * // LatencyMarker用来近似评估数据从读取到写出之间的延迟，但是
+     * // 并不包含计算的延迟。在算子中只能将数据记录交给UDF执行，所以收
+     * // 到LatencyMarker就直接交给下游了，
+     * @param latencyMarker
+     * @throws Exception
+     */
     public void processLatencyMarker(LatencyMarker latencyMarker) throws Exception {
         reportOrForwardLatencyMarker(latencyMarker);
     }
@@ -597,6 +605,8 @@ public abstract class AbstractStreamOperator<OUT>
     }
 
     public void processWatermark(Watermark mark) throws Exception {
+        // 单流输入逻辑比较简单，如果有定时器服务，则判断是否触发计
+        //算，并将Watermark发往下游
         if (timeServiceManager != null) {
             timeServiceManager.advanceWatermark(mark);
         }

@@ -179,6 +179,49 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * TaskExecutor implementation. The task executor is responsible for the execution of multiple
  * {@link Task}.
+ *
+ * <p>TaskExecutor 是 Flink 中 非 常 重 要 的 角 色 ， 绝 大 部 分 组 件 都 与
+ * TaskExecutor 有 关 系 ， 其 在 生 命 周 期 中 需 要 对 外 与 JobManager 、
+ * ResourceManager通信，对内需要管理Task及其相关的资源、结果分区等。
+ * <p>TaskManager是Task的载体，负责启动、执行、取消Task，并在
+ * Task异常时向JobManager汇报。TaskManager作为Task执行者，为Task
+ * 之间的数据交换提供基础框架。
+ * <p>从集群资源管理的角度，TaskManager是计算资源的载体，一个
+ * TaskManger 通 过 Slot 切 分 其 CPU 、 内 存 等 计 算 资 源 ， 未 来 还 会 包 含GPU。
+ * <p>一个Flink集群的TaskManager的个数从几十到几千上万都有可能。
+ * <p>为 了 实 现 Exactly-Once 和 容 错 ， 从 整 个 集 群 的 视 角 来 看 ，
+ * JobManager是检查点的协调管理者，TaskManager是检查点的执行者。
+ * <p>从集群管理的角度，TaskManager与JobManager之间通过心跳保持
+ * 相互感知。与ResourceManager保持心跳，汇报资源的使用情况，以便
+ * ResourceManager能够掌握全局资源的分布和剩余情况。集群内部的信
+ * 息交换基于Flink的RPC通信框架。
+ * <p>TaskManager提供的数据交换基础框架，最重要的是跨网络的数据
+ * 交换、内存资源的申请和分配以及其他需要在计算过程中Task共享的
+ * 组件，如ShuffleEnvironment等
+ *
+ * <h1> JobMaster的容错:TaskManager应对JobMaster故障</h1>
+ * <p>TaskManger 通 过 心 跳 超 时 检 测 到 JobMaster 故 障 ， 或 者 收 到
+ * ZooKeeper的JobMaster节点失去Leader角色的通知时，就会触发超时
+ * 的异常处理
+ * <p>TaskManager根据该JobMaster管理的Job的ID，将该TaskManager
+ * 上所有隶属于该Job的Task取消执行，Task进入Failed状态，但是仍然
+ * 保 留 为 Job 分 配 的 Slot 一 段 时 间 。 然 后 尝 试 连 接 新 的 JobMaster
+ * Leader ， 如 果 新 的 JobMaster 超 过 了 等 待 时 间 仍 然 没 有 连 接 上 ，
+ * TaskManger 不 再 等 待 ， 标 记 Slot 为 空 闲 并 通 知 ResourceManager ，
+ * ResourceManager就可以在下一次的Job调度执行中分配这些Slot资源。
+ *
+ * <h1>ResourceManager容错:TaskManager应对ResourceManager故障</h1>
+ * <p>TaskManager通过心跳检测到ResourceManager的故障，同样也会
+ * 首先尝试重新连接。如果一直没有连接成功，在HA模式下，选举出了
+ * 新 的 ResourceManager Leader ， TaskManager 也 会 得 到 通 知 ， 然 后
+ * TaskManager 会 与 新 的 ResourceManager 取 得 连 接 ， 将 自 己 注 册 到
+ * ResourceManager，并将其自身的状态同步到ResourceManager。
+ * 在最后实在无法与ResourceManager取得连接的情况下，集群无法
+ * 恢复到正常运行的状态，集群同样会停止。
+ *
+ * <h1>TaskManager的容错</h1>
+ * <p>TaskManager是集群的计算执行者，其上执行了一个或者多个Job
+ * 的Task。
  */
 public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 
@@ -586,6 +629,14 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
     // Task lifecycle RPCs
     // ----------------------------------------------------------------------
 
+    /**
+     * 该方法的核心逻辑是初始化Task，在初始化Task的过程中，需要
+     * 为Task生成核心组件，准备好Task的可执行文件。
+     * @param tdd describing the task to submit
+     * @param jobMasterId identifying the submitting JobMaster
+     * @param timeout of the submit operation
+     * @return
+     */
     @Override
     public CompletableFuture<Acknowledge> submitTask(
             TaskDeploymentDescriptor tdd, JobMasterId jobMasterId, Time timeout) {
@@ -735,7 +786,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
             } catch (SlotNotFoundException e) {
                 throw new TaskSubmissionException("Could not submit task.", e);
             }
-
+            // TaskExecutor实例化Task
             Task task =
                     new Task(
                             jobInformation,

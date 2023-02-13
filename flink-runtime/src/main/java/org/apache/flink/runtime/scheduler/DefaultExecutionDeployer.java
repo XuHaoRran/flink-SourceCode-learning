@@ -91,7 +91,7 @@ public class DefaultExecutionDeployer implements ExecutionDeployer {
             final List<Execution> executionsToDeploy,
             final Map<ExecutionVertexID, ExecutionVertexVersion> requiredVersionByVertex) {
         validateExecutionStates(executionsToDeploy);
-        // 改变Execution的状态
+        // 改变Execution的状态-》SCHEDULED
         transitionToScheduled(executionsToDeploy);
         // 分配槽
         final List<ExecutionSlotAssignment> executionSlotAssignments =
@@ -100,7 +100,7 @@ public class DefaultExecutionDeployer implements ExecutionDeployer {
         final List<ExecutionDeploymentHandle> deploymentHandles =
                 createDeploymentHandles(
                         executionsToDeploy, requiredVersionByVertex, executionSlotAssignments);
-
+        // 开始部署
         waitForAllSlotsAndDeploy(deploymentHandles);
     }
 
@@ -152,7 +152,14 @@ public class DefaultExecutionDeployer implements ExecutionDeployer {
     private void waitForAllSlotsAndDeploy(final List<ExecutionDeploymentHandle> deploymentHandles) {
         FutureUtils.assertNoException(
                 assignAllResourcesAndRegisterProducedPartitions(deploymentHandles)
-                        .handle(deployAll(deploymentHandles)));
+                        .handle(
+                                // 流 计 算 作 业 中 ， 需 要 一 次 性 部 署 所 有 Task ， 所 以 会 对 所 有 的
+                                // Execution异步获取Slot，申请到所有需要的Slot之后，经过一系列的
+                                // 过程，最终调用Execution#deploy进行实际的部署，实际上就是将
+                                // Task部署相关的信息通过TaskMangerGateway交给TaskManage
+                                deployAll(deploymentHandles)
+                        )
+        );
     }
 
     private CompletableFuture<Void> assignAllResourcesAndRegisterProducedPartitions(
@@ -183,6 +190,7 @@ public class DefaultExecutionDeployer implements ExecutionDeployer {
             final List<ExecutionDeploymentHandle> deploymentHandles) {
         return (ignored, throwable) -> {
             propagateIfNonNull(throwable);
+            // 对所有的Task进行调用，异步获取Slot，获取完毕之后异步部署Task
             for (final ExecutionDeploymentHandle deploymentHandle : deploymentHandles) {
                 final CompletableFuture<LogicalSlot> slotAssigned =
                         deploymentHandle.getLogicalSlotFuture();
@@ -308,6 +316,7 @@ public class DefaultExecutionDeployer implements ExecutionDeployer {
             }
 
             if (throwable == null) {
+                //部署
                 deployTaskSafe(execution);
             } else {
                 handleTaskDeploymentFailure(execution, throwable);

@@ -68,7 +68,12 @@ import static org.apache.flink.util.Preconditions.checkState;
  * <p>Explicit calls to {@link #flush()} will force this {@link
  * PipelinedSubpartitionView#notifyDataAvailable() notification} for any {@link BufferConsumer}
  * present in the queue.
- * <p>表示以pipeline的方式进行数据的生产和消费，在PipelinedSubpartition中，数据只存在于内存中，并且只会被消费一次</>
+ * <p>表示以pipeline的方式进行数据的生产和消费，在PipelinedSubpartition中，数据只存在于内存中，并且只会被消费一次
+ *
+ * <p>当向PipelinedSubPartition中添加1个完成的BufferConsumer或
+ * 者 添 加 下 一 个 BufferCon sumer 时 （ 这 种 情 况 下 ， 默 认 前 一 个
+ * BufferConsumer是完成的），会通知PipelinedSubPartitionView新数
+ * 据到达，可以消费了
  */
 public class PipelinedSubpartition extends ResultSubpartition
         implements CheckpointedResultSubpartition, ChannelStateHolder {

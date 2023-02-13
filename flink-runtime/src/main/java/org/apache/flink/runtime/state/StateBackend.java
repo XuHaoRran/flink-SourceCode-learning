@@ -44,6 +44,7 @@ import java.util.Collection;
  * 哪种StateBackend了。
  * </p>
  *
+ * <p>实现有状态计算和Exactly-Once的关键组件
  * A <b>State Backend</b> defines how the state of a streaming application is stored locally within
  * the cluster. Different State Backends store their state in different fashions, and use different
  * data structures to hold the state of a running application.

@@ -31,6 +31,23 @@ import java.util.List;
  *
  * <p>The co-location group is used to make sure that the i-th subtasks for iteration head and
  * iteration tail are scheduled on the same TaskManager.
+ *
+ * <p>CoLocationGroup又叫作本地约束共享组，具有强制性的Slot共享
+ * 限制，CoLocationGroup用在迭代运算中，即在IterativeStream的API
+ * 中 调 用 。 迭 代 运 算 中 的 Task 必 须 共 享 同 一 个 TaskManager 的 Slot 。
+ * CoLocationGroup可以看成是SlotSharingGroup的特例。
+ *
+ * <p>此处需要注意，JobGraph向ExecutionGraph的转换过程中，为每
+ * 一个ExecutionVertex赋予了按照并行度编写的编号，相同编号的迭代
+ * 计 算 ExecutionVertex 会 被 放 入 本 地 共 享 约 束 组 中 ， 共 享 相 同 的
+ * CoLocationConstraint对象，在调度的时候，根据编号就能找到本组
+ * 其他Task的Slot信息。
+ *
+ * <p>CoLocation 共 享 根 据 组 内 每 个 ExecutionVertex 关 联 的
+ * CoLocationConstraint查找是否有相同CoLocationConstraint约束已
+ * 分配Slot可用，在调度作业执行的时候，首先要找到本约束中其他
+ * Task部署的TaskManager，如果没有则申请一个新的Slot，如果有则共
+ * 享该TaskManager上的Slot。
  */
 public interface CoLocationGroup {
 

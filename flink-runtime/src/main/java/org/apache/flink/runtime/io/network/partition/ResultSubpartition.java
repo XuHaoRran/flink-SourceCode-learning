@@ -28,7 +28,14 @@ import java.io.IOException;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** A single subpartition of a {@link ResultPartition} instance. */
+/** A single subpartition of a {@link ResultPartition} instance.
+ * <p>结果子分区在Flink中叫作ResultSubPartition，结果子分区是结
+ * 果分区的一部分，负责存储实际的Buffer。
+ * <p>ResultPartition是一个Task的输出，上游Task跟下游Task之间的
+ * 数 据 交 换 经 常 是 一 对 多 的 关 系 ， 所 以 Flink 在 输 出 端 将
+ * ResultPartition进行了切分。例如，上游Task对接下游4个Task，就
+ * 为ResultPartition生成了4个ResultSubPartition。
+ * */
 public abstract class ResultSubpartition {
 
     /** The info of the subpartition to identify it globally within a task. */

@@ -45,6 +45,10 @@ import java.util.concurrent.TimeUnit;
  * standalone mode (via scripts), rather than via a resource framework like YARN.
  *
  * <p>This ResourceManager doesn't acquire new resources.
+ *
+ * <p>Flink集群自身的管理器，用于资源确定的部署模式，难以在大规
+ * 模的数据中心中共享资源，一般会选择使用Yarn模式，所以在实际生
+ * 产环境中使用得不多。
  */
 public class StandaloneResourceManager extends ResourceManager<ResourceID> {
 

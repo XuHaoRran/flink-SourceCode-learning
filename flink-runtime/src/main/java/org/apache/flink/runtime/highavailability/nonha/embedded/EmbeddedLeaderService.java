@@ -51,6 +51,7 @@ import static org.apache.flink.util.Preconditions.checkState;
  * a listener service for leader observers can be created via {@link
  * #createLeaderRetrievalService()}.
  *
+ * <p>内嵌的轻量级选举服务，用在Flink Local模式中，主要用来做本地的代码调试和单元测试。
  */
 public class EmbeddedLeaderService {
 

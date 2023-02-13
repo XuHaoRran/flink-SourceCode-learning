@@ -210,6 +210,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
         log.info(
                 "Starting scheduling with scheduling strategy [{}]",
                 schedulingStrategy.getClass().getName());
+        // 这里JobStatus作业状态从CREATED转变到RUNNING
         transitionToRunning();
         // 利用调度策略开始调度
         schedulingStrategy.startScheduling();
@@ -238,6 +239,7 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
 
         final Throwable error =
                 execution.getFailureInfo().get().getException().deserializeError(userCodeLoader);
+        // 处理Task执行错误
         handleTaskFailure(
                 execution,
                 maybeTranslateToClusterDatasetException(error, execution.getVertex().getID()));
@@ -302,9 +304,12 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
     }
 
     private void maybeRestartTasks(final FailureHandlingResult failureHandlingResult) {
+        // 如果task可以恢复就恢复
         if (failureHandlingResult.canRestart()) {
+            // 对于可恢复的作业，根据FailoverRegion分析哪些Task需要重启，调度重启Task
             restartTasksWithDelay(failureHandlingResult);
         } else {
+            // 不可以恢复则整个作业失败
             failJob(failureHandlingResult.getError(), failureHandlingResult.getTimestamp());
         }
     }
@@ -331,13 +336,14 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
                     verticesToRestart.size(),
                     failureHandlingResult.getFailedExecution().get().getAttemptId());
         }
-
+        // 添加要重启的Task到verticesWaitingForRestart，并将状态转换到RESTARTING
         addVerticesToRestartPending(verticesToRestart);
-
+        // 对于要重启的Task，首选取消正在执行的
         final CompletableFuture<?> cancelFuture = cancelTasksAsync(verticesToRestart);
 
         final FailureHandlingResultSnapshot failureHandlingResultSnapshot =
                 createFailureHandlingResultSnapshot(failureHandlingResult);
+        // 取消成功后，重启Task
         delayExecutor.schedule(
                 () ->
                         FutureUtils.assertNoException(
@@ -370,6 +376,14 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
         }
     }
 
+    /**
+     * 重启Task的过程中需要在ExecutionGraph中重置ExecutionVertex
+     * 状态，然后调度Task的重新执行，执行过程与作业发布类似，区别在
+     * 于本地启动的Task是作业的Task子集（重启所有Task的情况也是存在
+     * 的，如流作业）
+     * @param executionVertexVersions
+     * @param isGlobalRecovery
+     */
     private void restartTasks(
             final Set<ExecutionVertexVersion> executionVertexVersions,
             final boolean isGlobalRecovery) {
@@ -377,16 +391,16 @@ public class DefaultScheduler extends SchedulerBase implements SchedulerOperatio
                 executionVertexVersioner.getUnmodifiedExecutionVertices(executionVertexVersions);
 
         removeVerticesFromRestartPending(verticesToRestart);
-
+        // 重置ExecutionGraph中Execution状态，此时失败的Exectuon状态必须是结束状态，然后创建新的Execution对象
         resetForNewExecutions(verticesToRestart);
-
+        // 配置从快照中恢复所需呀哦的信息
         try {
             restoreState(verticesToRestart, isGlobalRecovery);
         } catch (Throwable t) {
             handleGlobalFailure(t);
             return;
         }
-
+        // 交给EagerSchedulingStrategy重启Task，类似于重新走作业发布的流程，区别在于，本次发布的是作业部分需要重启的Task！
         schedulingStrategy.restartTasks(verticesToRestart);
     }
 

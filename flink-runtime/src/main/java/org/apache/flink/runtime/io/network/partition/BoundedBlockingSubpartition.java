@@ -62,6 +62,11 @@ import static org.apache.flink.util.Preconditions.checkState;
  *
  * <p>The method calls to create readers, dispose readers, and dispose the partition are thread-safe
  * vis-a-vis each other.
+ *
+ * <p>用作对批处理Task的计算结果的数据存储，其行为是阻塞式的，
+ * 需要等待上游所有的数据处理完毕，然后下游才开始消费数据，可以
+ * 消费1次或者多次。此种ResultSubPartition有多种存储形式，可以保
+ * 存在文件中或者内存映射文件中等。
  */
 final class BoundedBlockingSubpartition extends ResultSubpartition {
 

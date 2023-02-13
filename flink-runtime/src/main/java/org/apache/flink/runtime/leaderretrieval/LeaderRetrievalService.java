@@ -27,6 +27,8 @@ package org.apache.flink.runtime.leaderretrieval;
  * once.
  *
  * <p>The service should be stopped by calling the stop method.
+ *
+ * <p>顾名思义，就是查找新的Leader节点的服务
  */
 public interface LeaderRetrievalService {
 

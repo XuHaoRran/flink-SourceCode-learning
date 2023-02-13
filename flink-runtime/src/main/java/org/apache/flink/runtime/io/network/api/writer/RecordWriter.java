@@ -45,8 +45,44 @@ import static org.apache.flink.util.Preconditions.checkArgument;
  *
  * <p>The RecordWriter wraps the runtime's {@link ResultPartitionWriter} and takes care of channel
  * selection and serializing records into bytes.
- * 一个任务中都可能有一个或多个链接在一起的算子，其中最后一个算子的输出会依赖RecordWriter类型的字段，RecordWriter类中依赖了
+ *
+ * <p>一个任务中都可能有一个或多个链接在一起的算子，其中最后一个算子的输出会依赖RecordWriter类型的字段，RecordWriter类中依赖了
  * ReusltPartitionWriter类型的tragetPartition字段，由此可以将数据写入ResultPartitionWriter
+ *
+ * <p>RecordWriter负责将Task处理的数据输出，然后下游Task就可以
+ * 继续处理了。RecordWriter面向的是StreamRecord，直接处理算子的
+ * 输出结果。ResultPatitionWriter面向的是Buffer，起到承上启下的
+ * 作用。RecordWriter比ResultPartitionWriter的层级要高，底层依赖
+ * 于ResultPar titionWriter。
+ * <p>在 DataStream API 中 介 绍 过 数 据 分 区 ， 其 中 最 核 心 的 抽 象 是
+ * ChannelSelector，在RecordWriter中实现了数据分区语义，将开发时
+ * 对 数 据 分 区 API 的 调 用 转 换 成 了 实 际 的 物 理 操 作 ， 如
+ * DataStream#shuffle（）等。
+ * <p>最底层内存抽象是MemorySegment，用于数据传输的是Buffer，那
+ * 么，承上启下对接、从Java对象转为Buffer的中间对象是什么呢?是
+ * StreamRecord。
+ * <p>RecordWriter 类 负 责 将 StreamRecord 进 行 序 列 化 ， 调 用
+ * SpaningRecordSerializer，再调用BufferBuilder写入MemorySegment
+ * 中（每个Task都有自己的LocalBufferPool，LocalBufferPool中包含
+ * 了多个MemorySegment）。
+ * <p>哪些数据会被会序列化?
+ * <ul>
+ *  <li>数据元素StreamElement：StreamElement共有4种。
+ *  <li>事件Event：Flink内部的系统事件，如CheckpointBarrier事件等
+ * </ul>
+ * <p>Flink RecordWriter提供两种写入方式：单播和广播
+ *
+ * <p>单播:根据ChannelSelector，对数据流中的每一条数据记录进行选路，
+ * 有 选 择 地 写 入 一 个 输 出 通 道 的 ResultSubPartition 中 ， 适 用 于 非
+ * BroadcastPartition。如果在开发的时候没有使用Partition，默认会
+ * 使用RoundRobinChannelSelector，使用RoundRobin算法选择输出通道
+ * 循环写入本地输出通道对应的ResultPartition，发送到下游Task
+ *
+ * <p>概念上来说，广播就是向下游所有的Task发送相同的数据，在所
+ * 有的ResultSubPartition中写入N份相同数据。但是在实际实现时，同
+ * 时写入N份重复的数据是资源浪费，所以对于广播类型的输出，只会写
+ * 入编号为0的ResultSubPartition中，下游Task对于广播类型的数据，
+ * 都会从编号为0的ResultSubPartition中获取数据
  * @param <T> the type of the record that can be emitted with this record writer
  */
 public abstract class RecordWriter<T extends IOReadableWritable> implements AvailabilityProvider {
@@ -132,6 +168,13 @@ public abstract class RecordWriter<T extends IOReadableWritable> implements Avai
         targetPartition.abortCheckpoint(checkpointId, cause);
     }
 
+    /**
+     * 序列化
+     * @param serializer
+     * @param record
+     * @return
+     * @throws IOException
+     */
     @VisibleForTesting
     public static ByteBuffer serializeRecord(
             DataOutputSerializer serializer, IOReadableWritable record) throws IOException {

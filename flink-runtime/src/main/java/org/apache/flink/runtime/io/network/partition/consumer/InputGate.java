@@ -36,6 +36,20 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * An input gate consumes one or more partitions of a single produced intermediate result.
  * 下游任务消费上游分区数据的入口，是一个抽象类
+ * <p>输入网关在Flink中叫作InputGate，是Task的输入数据的封装，
+ * 和JobGraph中的JobEdge一一对应，对应于上游的ResultParition。
+ * <p>InputGate 中 负 责 实 际 数 据 消 费 的 是 InputChannel ， 是
+ * InputChannel的容器，用于读取中间结果（IntermediateResult）在
+ * 并 行 执 行 时 由 上 游 Task 产 生 的 一 个 或 多 个 结 果 分 区
+ * （ResultPartition）
+ * <p>SingleInputGate 是 消 费 ResultPartition 的 实 体 ， 对 应 于 一 个
+ * IntermediateResult。而UnionInputGate主要充当InputGate容器的角
+ * 色，将多个InputGate联合起来，当作一个InputGate，一般是对应于
+ * 上游的多个输出类型相同的IntermediateResult，对应于多个上游的
+ * IntermediateResult。
+ * <p>InputGateWithMetrics 本 质 上 来 说 就 是 一 个 InputGate+ 监 控 统
+ * 计，统计InputGate读取的数据量，单位为byte。
+ *
  * <p>Each intermediate result is partitioned over its producing parallel subtasks; each of these
  * partitions is furthermore partitioned into one or more subpartitions.
  *

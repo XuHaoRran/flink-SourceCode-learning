@@ -42,6 +42,11 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * An input channel place holder to be replaced by either a {@link RemoteInputChannel} or {@link
  * LocalInputChannel} at runtime.
+ *
+ * <p>种用于占位目的的输入通道，需要占位通道是因为暂未确定相
+ * 对于Task生产者的位置，在确定上游Task位置之后，如果位于不同的
+ * TaskManager 则 替 换 为 RemoteInputChannel ， 如 果 位 于 相 同 的
+ * TaskManager则转换为LocalInputChannel
  */
 class UnknownInputChannel extends InputChannel implements ChannelStateHolder {
 

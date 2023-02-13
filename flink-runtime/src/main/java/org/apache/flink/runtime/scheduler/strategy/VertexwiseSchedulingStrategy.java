@@ -41,6 +41,8 @@ import static org.apache.flink.util.Preconditions.checkState;
  * indicates this strategy only supports ALL_EDGES_BLOCKING batch jobs). Note that this strategy
  * implements {@link SchedulingTopologyListener}, so it can handle the updates of scheduling
  * topology.
+ * <p>SchedulingStrategy实例，以顶点的粒度调度任务（这表明此策略仅支持ALL_EDGES_BLOCKING批处理作业）。
+ * 注意，此策略实现了SchedulengTopologyListener，因此它可以处理调度拓扑的更新。
  */
 public class VertexwiseSchedulingStrategy
         implements SchedulingStrategy, SchedulingTopologyListener {

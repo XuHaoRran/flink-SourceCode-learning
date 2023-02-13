@@ -50,6 +50,26 @@ import static org.apache.flink.util.Preconditions.checkState;
 
 /**
  * A result partition for data produced by a single task.
+ * <p>结果分区在Flink中叫作ResultPartition，用来表示作业的单个
+ * Task 产 生 的 数 据 。 ResultPartition 是 运 行 时 的 实 体 ， 与
+ * ExecutionGraph 中 的 中 间 结 果 分 区 对 应
+ * （ IntermediateResultPartition ） ， 一 个 ResultPartition 是 一 组
+ * Buffer 实 例 ， ResultPartition 由 ResultSubPartition 组 成 ，
+ * ResultSubPartition用来进一步将ResultPartition进行切分，切分成
+ * 多少个ResultSubPartition取决于直接下游子任务的并行度和数据分
+ * 发模式。
+ * <p>下游子任务消费上游子任务产生的ResultPartition，在实际请求
+ * 的 时 候 ， 是 向 上 游 请 求 ResultSubPartition ， 并 不 是 请 求 整 个
+ * ResultPartition，请求的方式有远程请求和本地请求两种。
+ * <p>ResultPartition 有 4 种 类 型 ： Blocking 、
+ * Blocking_persisted、Pipeline_bounded、Pipelined。对于流上的计
+ * 算而言，ResultPartition在作业的执行过程中会一直存在，但是对于
+ * 批处理而言，上游Task输出ResultPartition，下游Task消费上游的
+ * ResultPartition，消费完毕之后，上游的ResultPartition就没有什
+ * 么 用 了 ， 需 要 进 行 资 源 回 收 ， 所 以 Flink 增 加 了 新 的
+ * ReleaseOnConsumptionResultPartition
+ *
+ *
  *
  * <p>This class is the runtime part of a logical {@link IntermediateResultPartition}. Essentially,
  * a result partition is a collection of {@link Buffer} instances. The buffers are organized in one

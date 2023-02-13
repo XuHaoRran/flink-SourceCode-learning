@@ -52,7 +52,19 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
 
 /** An input channel, which requests a local subpartition.
- * 它本身就是一个监听器，用于监听数据是否可被消费，当数据可供消费时就会触发操作 */
+ * 它本身就是一个监听器，用于监听数据是否可被消费，当数据可供消费时就会触发操作
+ *
+ * <p>对应于本地结果子分区的输入通道，用来在本地进程内不同线程
+ * 之间的数据交换。
+ * <p>LocalInputChannel 实 际 调 用
+ * SingleInputGate.notifyChannelNonEmpty （ InputChannel
+ * channel），这个方法调用inputChannelsWithData.notifyAll , 唤醒
+ * 阻塞在inputChannelsWithData对象实例的所有线程。上文提到的阻塞
+ * 在CheckPointBarrierHandler.getNextNonBlocked（）方法的线程也
+ * 会被唤醒，返回数据。
+ *
+ *
+ * */
 public class LocalInputChannel extends InputChannel implements BufferAvailabilityListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalInputChannel.class);

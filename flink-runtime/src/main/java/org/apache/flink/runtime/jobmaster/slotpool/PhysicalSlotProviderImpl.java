@@ -33,10 +33,17 @@ import java.util.stream.Collectors;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** The provider serves physical slot requests. */
+/** The provider serves physical slot requests. SlotProvider接口定义了Slot的请求行为，支持两种请求模式
+ * <ul>
+ *     <li>SlotProvider接口定义了Slot的请求行为，支持两种请求模式</li>
+ *     <li>排队模式：排队等待可用Slot，当资源可用时分配资源</li>
+ * </ul>
+ *
+ *
+ * */
 public class PhysicalSlotProviderImpl implements PhysicalSlotProvider {
     private static final Logger LOG = LoggerFactory.getLogger(PhysicalSlotProviderImpl.class);
-
+    // slot选择策略
     private final SlotSelectionStrategy slotSelectionStrategy;
 
     private final SlotPool slotPool;

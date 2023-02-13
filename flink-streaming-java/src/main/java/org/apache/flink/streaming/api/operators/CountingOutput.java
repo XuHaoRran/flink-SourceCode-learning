@@ -25,7 +25,15 @@ import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.streaming.runtime.watermarkstatus.WatermarkStatus;
 import org.apache.flink.util.OutputTag;
 
-/** Wrapping {@link Output} that updates metrics on the number of emitted elements. */
+
+
+
+/** Wrapping {@link Output} that updates metrics on the number of emitted elements.
+ * CountingOutput其他Output实现类的包装类，该类没有任何业务
+ * 逻辑属性，只是用来记录其他Output实现类向下游发送的数据元素个
+ * 数，并作为监控指标反馈给Flink集群
+ *
+ * */
 public class CountingOutput<OUT> implements Output<StreamRecord<OUT>> {
     private final Output<StreamRecord<OUT>> output;
     private final Counter numRecordsOut;

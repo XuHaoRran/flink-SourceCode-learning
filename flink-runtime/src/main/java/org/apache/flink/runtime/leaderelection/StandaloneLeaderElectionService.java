@@ -30,6 +30,8 @@ import java.util.UUID;
  * implementation assumes that there is only a single {@link LeaderContender} and thus directly
  * grants him the leadership upon start up. Furthermore, there is no communication needed between
  * multiple standalone leader election services.
+ *
+ * <p>在没有ZooKeeper情况下的选举服务
  */
 public class StandaloneLeaderElectionService implements LeaderElectionService {
 

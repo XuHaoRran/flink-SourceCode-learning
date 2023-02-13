@@ -31,6 +31,10 @@ import org.apache.flink.util.OutputTag;
  * this interface that can be used to emit elements and other messages, such as barriers and
  * watermarks, from an operator.
  *
+ * <p>数据输出（Output）是算子向下游传递的数据抽象，定义了向下
+ * 游 发 送 StreamRecord 、 Watermark 、 LatencyMark 的 行 为 ， 对 于
+ * StreamRecord，多了一个SideOutput的行为定义
+ *
  * @param <T> The type of the elements that can be emitted.
  */
 @PublicEvolving

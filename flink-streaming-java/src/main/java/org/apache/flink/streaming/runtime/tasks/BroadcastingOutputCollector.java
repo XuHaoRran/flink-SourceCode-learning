@@ -29,6 +29,13 @@ import org.apache.flink.util.XORShiftRandom;
 
 import java.util.Random;
 
+/**
+ * BroadcastingOutputCollector &
+ * CopyingBroadcastingOutputCollector
+ * 包装类，内部包含了一组Output。向所有的下游Task广播数据。
+ * Copying和非Copying的区别在于是否重用对象。
+ * @param <T>
+ */
 class BroadcastingOutputCollector<T> implements WatermarkGaugeExposingOutput<StreamRecord<T>> {
 
     protected final Output<StreamRecord<T>>[] outputs;

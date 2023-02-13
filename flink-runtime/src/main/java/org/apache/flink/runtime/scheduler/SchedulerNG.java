@@ -65,6 +65,14 @@ import java.util.concurrent.CompletableFuture;
  *
  * <p>Implementations can expect that methods will not be invoked concurrently. In fact, all
  * invocations will originate from a thread in the {@link ComponentMainThreadExecutor}.
+ *
+ * <p>作业调度器是作业的执行、异常处理的核心，具备如下基本能力。
+ * <ul>
+ *     <li>1）作业的生命周期管理，如作业开始调度、挂起、取消。
+ *     <li>2）作业执行资源的申请、分配、释放。
+ *     <li>3）作业的状态管理，作业发布过程中的状态变化和作业异常时的FailOver等。
+ *     <li>4）作业的信息提供，对外提供作业的详细信息。
+ * </ul>
  */
 public interface SchedulerNG extends GlobalFailureHandler, AutoCloseableAsync {
     // 当构建好ExecutionGraph以后，就可以开始进行任务调度，这个时候会调用这个方法

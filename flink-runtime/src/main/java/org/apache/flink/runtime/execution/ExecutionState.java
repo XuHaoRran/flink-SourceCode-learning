@@ -46,12 +46,29 @@ package org.apache.flink.runtime.execution;
  * states.
  */
 public enum ExecutionState {
+    /**
+     *  ExecutionGraph 创 建 出 来 之 后 ， Execution 默 认 的 状 态 就 是
+     * Created
+     */
     CREATED,
 
+    /**
+     * 在ExecutionGraph中有Scheduled状态，在TaskManager上的Task
+     * 不会有该状态，Scheduled状态表示被调度执行的Task进入Scheduled
+     * 状态，但是并不是所有的Task都会变成Scheduled状态，然后开始申请
+     * 所需的计算资源
+     */
     SCHEDULED,
-
+    /**
+     * Deploying状态表示资源申请完毕，向TaskManager部署Task
+     */
     DEPLOYING,
 
+    /**
+     * TaskManager启动Task，并通知JobManager该Task进入Running状
+     * 态，JobManager将该Task所在的ExecutionGraph中对应的Execution设
+     * 置为Running状态
+     */
     RUNNING,
 
     /**
@@ -62,10 +79,25 @@ public enum ExecutionState {
      */
     FINISHED,
 
+    /**
+     * Cancelling 状 态 与 Scheduled 、 Deploying 状 态 类 似 ， 是
+     * ExecutionGraph中维护的一种状态，表示正在取消Task执行，等待
+     * TaskManager取消Task的执行，并返回结果
+     */
     CANCELING,
 
+    /**
+     * TaskManager取消Task执行成功，并通知JobManager，JobManager
+     * 将该Task所在的ExecutionGraph中对应的Execution设置为Canceled状
+     * 态。
+     */
     CANCELED,
-
+    /**
+     * 若TaskManger执行Task时出现异常导致Task无法继续执行，Task
+     * 会进入Failed状态，并通知JobManager，JobManager将该Task所在的
+     * ExecutionGraph中对应的Execution设置为Failed状态。整个作业也将
+     * 会进入Failed状态。
+     */
     FAILED,
 
     RECONCILING,

@@ -41,7 +41,14 @@ import java.io.UncheckedIOException;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** Implementation of {@link Output} that sends data using a {@link RecordWriter}. */
+/** Implementation of {@link Output} that sends data using a {@link RecordWriter}.
+ * RecordWriterOutput用来序列化数据，写入NetworkBuffer，交给下游算子，
+ * 同时计算两个监控指标：向下游发送的字节总数、向下游发送的Buffer总数
+ *
+ * <p>包 装 了 RecordWriter ， 使 用 RecordWriter 把 数 据 交 给 数 据 交 换
+ * 层。RecordWriter主要用来在线程间、网络间实现数据序列化、写
+ * 入。
+ * */
 @Internal
 public class RecordWriterOutput<OUT> implements WatermarkGaugeExposingOutput<StreamRecord<OUT>> {
 

@@ -46,6 +46,7 @@ import java.util.Optional;
  *
  * <p>This interface also offers the complementary method that provides access to previously saved
  * state of operator instances in the task for restore purposes.
+ *
  */
 public interface TaskStateManager extends CheckpointListener, AutoCloseable {
 

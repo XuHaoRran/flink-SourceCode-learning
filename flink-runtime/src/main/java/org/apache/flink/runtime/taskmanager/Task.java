@@ -118,6 +118,10 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
 
 /**
+ * <p>Task是Flink作业的子任务，由TaskManager直接负责管理调度，
+ * 为StreamTask执行业务逻辑的时候提供基础的组件，如内存管理器、
+ * IO管理器、输入网关、文件缓存等。
+ *
  * The Task represents one execution of a parallel subtask on a TaskManager. A Task wraps a Flink
  * operator (which may be a user function) and runs it, providing all services necessary for example
  * to consume input data, produce its results (intermediate result partitions) and communicate with
@@ -137,6 +141,8 @@ import static org.apache.flink.util.Preconditions.checkState;
  * Task依赖ResultPartitionWriter和InputGatae，它们分别负责消息的输出和输入，此外，Task还依赖AbstractInvokable类，
  * AbstractInvokable类的实现类包括StreamTask和BatchTask等，它们在某种程度上分别代表流任务和批任务的任务类，
  * 其中会封装具体的算子
+ *
+ *
  */
 public class Task
         implements Runnable, TaskSlotPayload, TaskActions, PartitionProducerStateProvider {
@@ -198,21 +204,38 @@ public class Task
     /** Access to task manager configuration and host names. */
     private final TaskManagerRuntimeInfo taskManagerConfig;
 
-    /** The memory manager to be used by this task. */
+    /** The memory manager to be used by this task.
+     * Task通过该组件申请和释放内存
+     * */
     private final MemoryManager memoryManager;
 
-    /** The I/O manager to be used by this task. */
+    /** The I/O manager to be used by this task.
+     * IO管理器，在批处理计算中（如排序、Join等场
+     * 景）经常会遇到内存中无法放下所有数据的情况，IOManager就负责将
+     * 数据溢出到磁盘，并在需要的时候将其读取回来
+     * */
     private final IOManager ioManager;
 
-    /** The BroadcastVariableManager to be used by this task. */
+    /** The BroadcastVariableManager to be used by this task.
+     * 广播变量管理器，Task可以共享该管理器，
+     * 通过引用计数跟踪广播变量的使用，没有使用的时候则清除。
+     * */
     private final BroadcastVariableManager broadcastVariableManager;
 
+    /**
+     * 任务事件分发器，从消费者任务分发事件给生产者任务
+     */
     private final TaskEventDispatcher taskEventDispatcher;
 
     /** Information provider for external resources. */
     private final ExternalResourceInfoProvider externalResourceInfoProvider;
 
-    /** The manager for state of operators running in this task/slot. */
+    /** The manager for state of operators running in this task/slot.
+     * 负 责 State 的 整 体 协 调 。 其 中 封 装 了
+     * CheckpointResponder，在StreamTask中用来跟JobMaster交互，汇报
+     * 检查点的状态
+     *
+     * */
     private final TaskStateManager taskStateManager;
 
     /**
@@ -227,7 +250,10 @@ public class Task
     /** Connection to the task manager. */
     private final TaskManagerActions taskManagerActions;
 
-    /** Input split provider for the task. */
+    /** Input split provider for the task.
+     * 在数据源算子中，用来向JobMaster请
+     * 求分配数据集的分片，然后读取该分片的数据
+     * */
     private final InputSplitProvider inputSplitProvider;
 
     /** Checkpoint notifier used to communicate with the CheckpointCoordinator. */
@@ -241,7 +267,11 @@ public class Task
     /** GlobalAggregateManager used to update aggregates on the JobMaster. */
     private final GlobalAggregateManager aggregateManager;
 
-    /** The library cache, from which the task can request its class loader. */
+    /** The library cache, from which the task can request its class loader.
+     * 开发者开发的Flink作业打包成jar提
+     * 交给Flink集群，在Task启动的时候，需要从此组件远程下载所需要的
+     * jar文件等，在Task的类加载器中加载，然后才能够执行业务逻辑。
+     * */
     private final LibraryCacheManager.ClassLoaderHandle classLoaderHandle;
 
     /** The cache for user-defined files that the invokable requires. */
@@ -259,7 +289,10 @@ public class Task
     /** Parent group for all metrics of this task. */
     private final TaskMetricGroup metrics;
 
-    /** Partition producer state checker to request partition states from. */
+    /** Partition producer state checker to request partition states from.
+     * 分区状态检查器，用于检查生产端分区状态
+     *
+     * */
     private final PartitionProducerStateChecker partitionProducerStateChecker;
 
     /** Executor to run future callbacks. */
@@ -313,7 +346,7 @@ public class Task
             List<InputGateDeploymentDescriptor> inputGateDeploymentDescriptors,
             MemoryManager memManager,
             IOManager ioManager,
-            ShuffleEnvironment<?, ?> shuffleEnvironment,
+            ShuffleEnvironment<?, ?> shuffleEnvironment, // 数据交换的管理环境，其中包含了数写出、数据分区的管理等组件
             KvStateService kvStateService,
             BroadcastVariableManager bcVarManager,
             TaskEventDispatcher taskEventDispatcher,
@@ -568,6 +601,7 @@ public class Task
         // ----------------------------
         //  Initial State transition
         // ----------------------------
+        // 处理Task的状态变换
         while (true) {
             ExecutionState current = this.executionState;
             if (current == ExecutionState.CREATED) {
@@ -619,7 +653,7 @@ public class Task
             // first of all, get a user-code classloader
             // this may involve downloading the job's JAR files and/or classes
             LOG.info("Loading JAR files for task {}.", this);
-
+            // 创建用户自定义的ClassLoader，避免不同Job在相同JVM中执行时的Jar版本冲突
             userCodeClassLoader = createUserCodeClassloader();
             final ExecutionConfig executionConfig =
                     serializedExecutionConfig.deserializeValue(userCodeClassLoader.asClassLoader());
@@ -646,7 +680,7 @@ public class Task
             // ----------------------------------------------------------------
 
             LOG.debug("Registering task at network: {}.", this);
-            // 初始化ResultPartition和InputGate
+            // 初始化ResultPartition和InputGate，并注册Partition
             setupPartitionsAndGates(partitionWriters, inputGates);
 
             for (ResultPartitionWriter partitionWriter : partitionWriters) {
@@ -681,7 +715,7 @@ public class Task
 
             TaskKvStateRegistry kvStateRegistry =
                     kvStateService.createKvStateTaskRegistry(jobId, getJobVertexId());
-
+            // 初始化用户代码
             Environment env =
                     new RuntimeEnvironment(
                             jobId,
@@ -714,6 +748,7 @@ public class Task
             // Make sure the user code classloader is accessible thread-locally.
             // We are setting the correct context class loader before instantiating the invokable
             // so that it is available to the invokable during its entire lifetime.
+            // 设置线程的ClassLoader，避免不同Job的jar版本冲突
             executingThread.setContextClassLoader(userCodeClassLoader.asClassLoader());
 
             // When constructing invokable, separate threads can be constructed and thus should be
@@ -721,7 +756,7 @@ public class Task
             FlinkSecurityManager.monitorUserSystemExitForCurrentThread();
             try {
                 // now load and instantiate the task's invokable code
-                // 初始化AbstractInvokable
+                // 初始化AbstractInvokable加载业务逻辑执行代码，并赋予RuntimeEnvironment
                 invokable =
                         loadAndInstantiateInvokable(
                                 userCodeClassLoader.asClassLoader(), nameOfInvokableClass, env);
@@ -735,6 +770,7 @@ public class Task
 
             // we must make strictly sure that the invokable is accessible to the cancel() call
             // by the time we switched to running.
+            // 核心逻辑，启动StreamTask执行
             this.invokable = invokable;
             // 任务执行
             restoreAndInvoke(invokable);
@@ -750,7 +786,8 @@ public class Task
             // ----------------------------------------------------------------
 
             // finish the produced partitions. if this fails, we consider the execution failed.
-            // ResultPartition的结束
+            // ResultPartition的结束，把尚未写出给下游的数据统一flush，如果失败的话，
+            // task也会失败
             for (ResultPartitionWriter partitionWriter : partitionWriters) {
                 if (partitionWriter != null) {
                     partitionWriter.finish();
@@ -821,7 +858,9 @@ public class Task
                 LOG.error(message, tt);
                 notifyFatalError(message, tt);
             }
-        } finally {
+        } finally { // 释放内存，占用的Cache等，并进入Final状态，停止监控
+
+
             try {
                 LOG.info("Freeing task resources for {} ({}).", taskNameWithSubtask, executionId);
 
@@ -908,23 +947,24 @@ public class Task
             if (!transitionState(ExecutionState.DEPLOYING, ExecutionState.INITIALIZING)) {
                 throw new CancelTaskException();
             }
-            // 更新了任务中该字段的值，那么要通知作业管理器修改相应的值，这时需要调用taskManagerActions字段的updateTaskExecutionState
+            // INITIALIZING状态，更新了任务中该字段的值，那么要通知作业管理器修改相应的值，这时需要调用taskManagerActions字段的updateTaskExecutionState
             taskManagerActions.updateTaskExecutionState(
                     new TaskExecutionState(executionId, ExecutionState.INITIALIZING));
 
             // make sure the user code classloader is accessible thread-locally
+            // 设置执行线程的ClassLoader
             executingThread.setContextClassLoader(userCodeClassLoader.asClassLoader());
-
+            // 进入
             runWithSystemExitMonitoring(finalInvokable::restore);
 
             if (!transitionState(ExecutionState.INITIALIZING, ExecutionState.RUNNING)) {
                 throw new CancelTaskException();
             }
 
-            // notify everyone that we switched to running
+            // notify everyone that we switched to running 转变到RUNNING的状态
             taskManagerActions.updateTaskExecutionState(
                     new TaskExecutionState(executionId, ExecutionState.RUNNING));
-
+            // 启动业务逻辑的执行，执行线程中循环执行
             runWithSystemExitMonitoring(finalInvokable::invoke);
         } catch (Throwable throwable) {
             try {
@@ -946,7 +986,7 @@ public class Task
     private void runWithSystemExitMonitoring(RunnableWithException action) throws Exception {
         FlinkSecurityManager.monitorUserSystemExitForCurrentThread();
         try {
-            action.run();
+            action.run(); // 启动
         } finally {
             FlinkSecurityManager.unmonitorUserSystemExitForCurrentThread();
         }
@@ -955,13 +995,14 @@ public class Task
     @VisibleForTesting
     public static void setupPartitionsAndGates(
             ResultPartitionWriter[] producedPartitions, InputGate[] inputGates) throws IOException {
-
+        // 初始化结果的分区
         for (ResultPartitionWriter partition : producedPartitions) {
             partition.setup();
         }
 
         // InputGates must be initialized after the partitions, since during InputGate#setup
         // we are requesting partitions
+        // 初始化InputGate，并请求结果分区
         for (InputGate gate : inputGates) {
             gate.setup();
         }

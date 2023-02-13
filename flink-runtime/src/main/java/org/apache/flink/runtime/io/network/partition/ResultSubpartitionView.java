@@ -29,7 +29,17 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 
 /** A view to consume a {@link ResultSubpartition} instance. 下游要读取上游的数据时，会给上游发送请求，
  * 此时上游会先创建一个试图对象去读取数据，这个对象对应的类就是ResultSubpartitionView，利用这个试图对象读取数据后，
- * 再传递给下游 */
+ * 再传递给下游。其中getNextBuffer是最重要的方法，用来获取Buffer
+ *
+ * <p>Flink中设计了两种不同类型的结果子分区，其存储机制不同，对
+ * 应于结果子分区的不同类型，定义了两个结果子分区视图</p>
+ * <ul>
+ *     <li>PipelinedSubPartitionView ： 用 来 读 取
+ * PipelinedSubPartition中的数据。
+ *     <li>BoundedBlockingSubPartitionReader ： 用 来 读 取
+ * BoundedBlockingSubPartition中的数据
+ * </ul>
+ * */
 public interface ResultSubpartitionView {
 
     /**

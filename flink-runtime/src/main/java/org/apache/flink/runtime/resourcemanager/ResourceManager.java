@@ -111,6 +111,33 @@ import static org.apache.flink.util.Preconditions.checkState;
  *   <li>{@link #registerJobMaster(JobMasterId, ResourceID, String, JobID, Time)} registers a {@link
  *       JobMaster} at the resource manager
  * </ul>
+ *
+ * 作用如下：
+ * 1.申请容器启动新的TM，或者为作业申请Slot
+ * 2.处理JobManager和TaskManager的异常推出
+ * 3.缓存TaskManager，等待一段时间之后再释放掉不用的容器，避免资源反复地申请释放
+ * 4.JobManager 和 TaskManager 的 心 跳 感 知 ， 对 JobManager 和
+ * TaskManger的退出进行对应的处理
+ *
+ * <h1>JobMaster的容错:ResourceManager应对JobMaster故障</h1>
+ * <p>ResourceManager通过心跳超时检测到JobMaster故障，或者收到
+ * Zookeeper的关于JobMaster失去Leader的通知时，ResourceManager会
+ * 通知JobMaster重新尝试连接，其他不作处理
+ *
+ * <h1>ResourceManager容错</h1>
+ * <p>ResourceManager负责Job资源的管理，ResourceManager上维护着
+ * 很多重要信息，如所有可用的TaskManager的清单等。这些信息是在内
+ * 存中进行维护的，并不会持久化到存储上，JobMaster、TaskManager
+ * 向ResourceManager发送心跳的过程中，心跳数据中带有这些信息，很
+ * 快就会将状态同步到ResourceManager中。
+ * <p>在设计上，ResourceManager的故障不会中断Task的执行，但是无
+ * 法启动新的Task。
+ *
+ * <h1>TaskManager的容错:ResourceManager应对TaskManager故障</h1>
+ * <p>ResouceManager通过心跳超时检测到TaskManager故障，它会通知
+ * 对 应 的 JobMaster 并 启 动 一 个 新 的 TaskManager 作 为 代 替 。 注 意 ，
+ * ResouceManager并不关心Flink作业的情况，管理Flink作业要做何种
+ * 反应是JobMaster的职责</p>
  */
 public abstract class ResourceManager<WorkerType extends ResourceIDRetrievable>
         extends FencedRpcEndpoint<ResourceManagerId> implements ResourceManagerGateway {

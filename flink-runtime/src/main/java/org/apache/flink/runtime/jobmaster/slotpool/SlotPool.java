@@ -39,7 +39,25 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-/** The Interface of a slot pool that manages slots. */
+/** The Interface of a slot pool that manages slots.
+ * <p>Slot资源池在Flink中叫作SlotPool，是JobMaster中记录当前作
+ * 业 从 TaskManager 获 取 的 Slot 的 集 合 。 JobMaster 的 调 度 器 首 先 从
+ *
+ * <p>SlotPool中获取Slot来调度任务，SlotPool在没有足够的Slot资源执
+ * 行 作 业 的 时 候 ， 首 先 会 尝 试 从 ResourceManager 中 获 取 资 源 ， 如 果
+ * ResourceManager当前不可用、ResourceManager拒绝资源请求或者请
+ * 求超时，资源申请失败，则作业启动失败。
+ *
+ * <p>JobMaster 申 请 到 资 源 之 后 ， 会 在 本 地 持 有 Slot ， 避 免
+ * ResourceManager异常导致作业运行失败。对于批处理而言，持有资源
+ * JobMaster 首 先 可 以 避 免 多 次 向 ResourceManager 申 请 资 源 ， 同 时
+ * ResourceManager不可用也不会影响作业的继续执行，只有资源不足时
+ * 才会导致作业执行失败。
+ *
+ * <p>当 作 业 已 经 执 行 完 毕 或 者 作 业 完 全 启 动 且 资 源 有 剩 余 时 ，
+ * JobMaster会将剩余资源交还给ResourceManager。
+ *
+ * */
 public interface SlotPool extends AllocatedSlotActions, AutoCloseable {
 
     // ------------------------------------------------------------------------

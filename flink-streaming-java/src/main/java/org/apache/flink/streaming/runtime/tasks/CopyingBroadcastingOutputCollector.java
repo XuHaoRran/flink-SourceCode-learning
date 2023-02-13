@@ -24,6 +24,11 @@ import org.apache.flink.util.OutputTag;
 /**
  * Special version of {@link BroadcastingOutputCollector} that performs a shallow copy of the {@link
  * StreamRecord} to ensure that multi-chaining works correctly.
+ *
+ * <p>BroadcastingOutputCollector &
+ * CopyingBroadcastingOutputCollector
+ * 包装类，内部包含了一组Output。向所有的下游Task广播数据。
+ * Copying和非Copying的区别在于是否重用对象。
  */
 final class CopyingBroadcastingOutputCollector<T> extends BroadcastingOutputCollector<T> {
 

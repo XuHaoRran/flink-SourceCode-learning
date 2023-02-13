@@ -18,7 +18,11 @@
 
 package org.apache.flink.runtime.io.network.partition;
 
-/** Type of a result partition. */
+/** Type of a result partition.
+ * <p>执行模式的不同决定了数据交换行为的不同，为了能够实现不同
+ * 的数据交换行为，Flink在ResultPartitionType中定义了4种类型的数
+ * 据分区模式，与执行模式一起完成批流在数据交换层面的统一</p>
+ * */
 public enum ResultPartitionType {
 
     /**
@@ -31,6 +35,15 @@ public enum ResultPartitionType {
      * <p>The partition is not automatically released after being consumed (like for example the
      * {@link #PIPELINED} partitions), but only released through the scheduler, when it determines
      * that the partition is no longer needed.
+     *
+     * <p>
+     * BLOCKING类型的数据分区会等待数据完全处理完毕，然后才会交
+     * 给下游进行处理，在上游处理完毕之前，不会与下游进行数据交换。
+     * 该类型的数据分区可以被多次消费，也可以并发消费。被消费完毕之
+     * 后不会自动释放，而是等待调度器来判断该数据分区无人再消费之
+     * 后，由调度器发出销毁指令。
+     * 该模式适用于批处理，不提供反压流控能力。
+     * </p>
      */
     BLOCKING(true, false, false, ConsumingConstraint.BLOCKING, ReleaseBy.SCHEDULER),
 
@@ -44,6 +57,10 @@ public enum ResultPartitionType {
      * <p>Otherwise, the partition may only be dropped by safety-nets during failure handling
      * scenarios, like when the TaskManager exits or when the TaskManager loses connection to
      * JobManager / ResourceManager for too long.
+     *
+     * <p>BLOCKING_PERSISTENT类型的数据分区类似于BLOCKING，但是其生
+     * 命周期由用户指定。调用JobManager或者ResourceManager API进行销
+     * 毁，而不是由调度器控制。</p>
      */
     BLOCKING_PERSISTENT(true, false, true, ConsumingConstraint.BLOCKING, ReleaseBy.SCHEDULER),
 
@@ -56,6 +73,12 @@ public enum ResultPartitionType {
      *
      * <p>This result partition type may keep an arbitrary amount of data in-flight, in contrast to
      * the {@link #PIPELINED_BOUNDED} variant.
+     *
+     * <p>PIPELINED（流水线）式数据交换适用于流计算和批处理。
+     * 数据处理结果只能被1个消费者（下游的算子）消费1次，当数据
+     * 被消费之后即自动销毁。PIPELINED分区可能会保存一定数据的数据，
+     * 与PIPELINED_BOUNDED相反。此结果分区类型可以在运行中保留任意数
+     * 量的数据。当数据量太大内存无法容纳时，可以写入磁盘中。</p>
      */
     PIPELINED(false, false, false, ConsumingConstraint.MUST_BE_PIPELINED, ReleaseBy.UPSTREAM),
 
@@ -69,6 +92,15 @@ public enum ResultPartitionType {
      *
      * <p>For batch jobs, it will be best to keep this unlimited ({@link #PIPELINED}) since there
      * are no checkpoint barriers.
+     *
+     * <p>PIPELINED_BOUNDED 是 PIPELINED 带 有 一 个 有 限 大 小 的 本 地 缓 冲
+     * 池。
+     * 对于流计算作业来说，固定大小的缓冲池可以避免缓冲太多的数
+     * 据和检查点延迟太久。不同于限制整体网络缓冲池的大小，该模式下
+     * 允许根据分区的总数弹性地选择网络缓冲池的大小。
+     * 对于批处理作业来说，最好使用无限制的PIPELINED数据交换模
+     * 式，因为在批处理模式下没有CheckpointBarrier，其实现Exactly-
+     * Once与流计算不同</p>
      */
     PIPELINED_BOUNDED(
             false, true, false, ConsumingConstraint.MUST_BE_PIPELINED, ReleaseBy.UPSTREAM),

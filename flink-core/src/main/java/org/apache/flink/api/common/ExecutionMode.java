@@ -28,6 +28,12 @@ import org.apache.flink.annotation.Public;
 public enum ExecutionMode {
 
     /**
+     * <p>此模式以流水线方式（包括Shuffle和广播数据）
+     * 执行作业，但流水线可能会出现死锁的数据交换除外。如果可能会出
+     * 现数据交换死锁，则数据交换以Batch方式执行。
+     * <p>当数据流被多个下游分支消费处理，处理后的结果再进行Join
+     * 时，如果以Pipelined模式运行，则可能出现数据交换死锁。
+     *
      * Executes the program in a pipelined fashion (including shuffles and broadcasts), except for
      * data exchanges that are susceptible to deadlocks when pipelining. These data exchanges are
      * performed in a batch manner.
@@ -56,6 +62,8 @@ public enum ExecutionMode {
      * <p>This option should only be used with care and only in situations where the programmer is
      * sure that the program is safe for full pipelining and that Flink was too conservative when
      * choosing the batch exchange at a certain point.
+     *
+     * <p>一般情况下，Pipelined模式是优先选择，确保不会出现数据死锁的情况下才会使用Pipelined_Forced模式
      */
     PIPELINED_FORCED,
 

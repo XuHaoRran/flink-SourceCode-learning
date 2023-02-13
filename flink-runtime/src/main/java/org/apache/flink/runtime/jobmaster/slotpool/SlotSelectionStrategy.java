@@ -28,7 +28,27 @@ import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Optional;
 
-/** Interface for slot selection strategies. */
+/** Interface for slot selection strategies.
+ * 选择策略从总体上分为两大类：
+ * <p>1.位 置 优 先 的 选 择 策 略 LocationPreferenceSlotSelectionStrategy
+ * <ul>
+ *     <li>1 ） 默 认 策 略 。
+ * DefaultLocationPreferenceSlotSelectionStrategy ， 该 策 略 不 考 虑
+ * 资源的均衡分配，会从满足条件的可用Slot集合选择第1个，以此类
+ * 推。</li>
+ *    <li>
+ *        2 ） 均 衡 策 略 。
+ * EvenlySpreadOutLocationPreferenceSlotSelectionStrategy ， 该 策
+ * 略考虑资源的均衡分配，会从满足条件的可用Slot集合中选择剩余资
+ * 源最多的Slot，尽量让各个TaskManager均衡地承担计算压力。
+ *    </li>
+ * </ul>
+ *
+ * <p>2.已 分 配 Slot 优 先 的 选 择 策 略
+ * PreviousAllocationSlotSelectionStrategy</p>
+ *
+ *
+ * */
 public interface SlotSelectionStrategy {
 
     /**

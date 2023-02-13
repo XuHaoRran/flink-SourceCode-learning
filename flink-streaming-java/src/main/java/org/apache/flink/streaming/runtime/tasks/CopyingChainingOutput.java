@@ -26,6 +26,15 @@ import org.apache.flink.util.OutputTag;
 
 import javax.annotation.Nullable;
 
+/**
+ * ChainingOutput & CopyingChainingOutput
+ * 这两个类是在OperatorChain内部的算子之间传递数据用的，并不
+ * 会 有 序 列 化 的 过 程 。 直 接 在 Output 中 调 用 下 游 算 子 的
+ * processElement（）方法。在同一个线程内的算子直接传递数据，跟
+ * 普通的Java方法调用一样，这样就直接省略了线程间的数据传送和网
+ * 络间的数据传送的开销。
+ * @param <T>
+ */
 final class CopyingChainingOutput<T> extends ChainingOutput<T> {
 
     private final TypeSerializer<T> serializer;

@@ -538,6 +538,7 @@ public class Execution
         // make sure exactly one deployment call happens from the correct state
         ExecutionState previous = this.state;
         if (previous == SCHEDULED) {
+            // 设置到DEPLOYING状态
             if (!transitionState(previous, DEPLOYING)) {
                 // race condition, someone else beat us to the deploying call.
                 // this should actually not happen and indicates a race somewhere else
@@ -579,7 +580,7 @@ public class Execution
                     vertex.getID(),
                     getAssignedResourceLocation(),
                     slot.getAllocationId());
-            // 构造TaskDeploymentDescriptor对象
+            // 构造TaskDeploymentDescriptor对象，Task部署描述信息
             final TaskDeploymentDescriptor deployment =
                     TaskDeploymentDescriptorFactory.fromExecution(this)
                             .createDeploymentDescriptor(
@@ -589,7 +590,7 @@ public class Execution
 
             // null taskRestore to let it be GC'ed
             taskRestore = null;
-
+            // TaskManager RPC通信接口
             final TaskManagerGateway taskManagerGateway = slot.getTaskManagerGateway();
 
             final ComponentMainThreadExecutor jobMasterMainThreadExecutor =
@@ -600,7 +601,21 @@ public class Execution
             // does not block
             // the main thread and sync back to the main thread once submission is completed.
             // 将任务提交到任务管理器端
+            // 通过异步回调的方式，调用TaskManagerGateway的RPC通信接口将Task发送
+            // 给TaskManager，避免TDD作业描述信息太大，导致主线程阻塞
             CompletableFuture.supplyAsync(
+                    // TaskManagerGateway#submitTask的调用最后
+                    // 是对TaskExecutor#submitTask的调用
+                    // 至此，将Task发送到TaskManager进程，TaskManager中接收Task
+                    //部署信息，接下来开始启动Task的执行，并向JobMaster汇报状态变换。
+
+                    // JobMaster通过TaskManagerGateway#submit（）RPC接口将Task发
+                    //送到TaskManager上，TaskManager接收到Task的部署消息后，分为两
+                    //个阶段执行：第一个阶段从部署消息中获取Task执行所需要的信息，
+                    //初始化Task，然后触发Task的执行，Task完成一系列的初始化动作
+                    //后，进入Task执行阶段。在部署和执行的过程中，TaskExecutor与
+                    //JobMaster 保 持 交 互 ， 将 Task 的 状 态 汇 报 给 JobMaster ， 并 接 受
+                    //JobMaster的Task管理操作，
                             () -> taskManagerGateway.submitTask(deployment, rpcTimeout), executor)
                     .thenCompose(Function.identity())
                     .whenCompleteAsync(

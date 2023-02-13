@@ -48,6 +48,9 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 /**
  * A failover strategy that proposes to restart involved regions when a vertex fails. A region is
  * defined by this strategy as tasks that communicate via pipelined data exchange.
+ * 分区恢复策略，若Task发生异常，则重启该分区的所有Task，恢复成本低，实现逻辑复杂。
+ * Flip1引入的作业Failover机制，将整个作业的物理执行拓扑TaskDAG切分为不同的FailoverRegion。FailoverRegion本质上是一组有相互关系的Task，失败恢复的时候按照FailoverRegion回溯，
+ * 重新启动需要启动的Task
  */
 public class RestartPipelinedRegionFailoverStrategy implements FailoverStrategy {
 

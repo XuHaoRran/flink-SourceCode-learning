@@ -142,6 +142,90 @@ import static org.apache.flink.util.Preconditions.checkState;
  * <ul>
  *   <li>{@link #updateTaskExecutionState} updates the task execution state for given task
  * </ul>
+ *
+ *
+ * <p>现在提到JobManager的时候，其实是说Flink的JobManager角色，
+ * 是 一 个 独 立 运 行 的 进 程 ， 该 进 程 中 包 含 了 一 系 列 的 服 务 ， 如
+ * Dispatcher、ResourceManager等。
+ *
+ * <p>JobMaster负责单个作业的管理，提供了对作业的管理行为，允许
+ * 通过外部的命令干预作业的运行，如提交、取消等。同时JobMaster也
+ * 维护了整个作业及其Task的状态，对外提供对作业状态的查询功能。
+ * JobMaster负责接收JobGraph，并将其转换为ExecutionGraph，启动调
+ * 度器执行ExecutionGraph。
+ * <br>
+ * <p>1.调度执行和管理
+ * <p>将 JobGraph 转 化 为 ExecutionGraph ， 调 度 Task 的 执 行 ， 并 处 理
+ * Task的异常，进行作业恢复或者中止。根据TaskManager汇报的状态维
+ * 护ExecutionGraph。
+ * <p>（1）InputSplit分配
+ * 在批处理中使用，为批处理计算任务分配待计算的数据分片。
+ * <p>（2）结果分区跟踪
+ * <p>结果分区跟踪器（PartitionTracker）跟踪非Pipelined模式的分
+ * 区，其实就是跟踪批处理中的结果分区，当结果分区消费完之后，具
+ * 备结果分区释放条件时，向TaskExecutor和ShuffleMaster发出释放请
+ * 求。
+ * <p>（3）作业执行异常
+ * <p>根据作业的执行异常，选择重启作业或者停止作业。
+ * <p>2.作业Slot资源管理
+ * <p>Slot资源的申请、持有和释放。JobMaster将具体的管理动作交给
+ * SlotPool 来 执 行 ， SlotPool 持 有 资 源 ， 资 源 不 足 时 负 责 与
+ * ResourceManager交互申请资源。
+ * 释放TaskManager的情况：作业停止、闲置TM、TM心跳超时。
+ * <p>3.检查点与保存点
+ * <p>CheckpointCoordinator负责进行检查点的发起、完成确认，检查
+ * 点异常或者重复时取消本次检查点的执行。保存点由运维管理人员手
+ * 动触发或者通过接口调用触发。
+ * <p>4.监控运维相关
+ * 反压跟踪、作业状态、作业各算子的吞吐量等监控指标。
+ * <p>5.心跳管理
+ * <p>JobMaster、ResourceManager、TaskManager是3个分布式组件，
+ * 相互之间通过网络进行通信，那么不可避免地会遇到各种导致无法通
+ * 信的情况。所以三者之间通过两两心跳相互感知对方。一旦出现心跳
+ * 超时，则进入异常处理阶段，或是进行切换，或是进行资源清理。
+ *
+ * <h1>JobMaster的容错:JobMaster切换</h1>
+ * <p>JobMaster保存了对作业执行至关重要的状态和数据，JobGraph、
+ * 用户的Jar包、配置文件、检查点数据等保存在配置的分布式可靠存储
+ * 中，一般使用HDFS。检查点访问信息保存在ZooKeeper中。
+ * <p>JobMaster 出 现 故 障 之 后 要 选 举 新 的 JobMaster Leader ， 新 的
+ * Leader选举出来之后，会通知ResourceManager和TaskManager。
+ * <p>JobMaster 的 首 要 任 务 是 重 新 调 度 Job ， 如 果 Slot 还 没 有 被
+ * TaskManager释放掉，TaskManager向ResourceManager发送的心跳信息
+ * 中告知资源的使用情况和当前的Slot属于哪个Job ID。JobMaster直接
+ * 向ResourceManager申请，ResourceManager无须申请新的Slot。
+ *
+ * <h1>ResourceManager容错:JobMaster应对ResourceManager故障</h1>
+ * <p>JobMaster通过心跳超时检测到ResourceManager故障，此时导致
+ * 故障的原因有很多，可能是简单的网络延迟问题。在非HA部署模式
+ * 下，不会有新的ResourceManager Leader出现。所以JobMaster会首先
+ * 尝试重新连接ResourceManager。
+ * <p>如果一直没有连接上，则在HA模式下，JobMaster通过Leader选举
+ * 通 知 得 到 新 的 ResourceManager 地 址 ， 通 过 该 地 址 重 新 与
+ * ResourceManager连接。
+ * <p>在最后实在无法与ResourceManager取得连接的情况下，则整个集
+ * 群就会停止。
+ *
+ * <h1>TaskManager的容错:JobMaster应对TaskManager故障</h1>
+ * <p>JobMaster通过心跳超时检测到TaskManager故障，它首先会从自
+ * 己的Slot Pool中移除该TaskManager，并释放该TaskManager的Slot，
+ * 最终会触发Execution的异常处理，然后触发Job级别的恢复，从而重
+ * 新申请资源， 由ResourceManager启动新的TaskManager 来 重 新 执 行Job。
+ * <p>结合作业的失败调度过程，可以知道TaskManger的故障其实就是
+ * 作业Task异常的Failover的过程。
+ * <p>基于Standalone资源管理，TaskManger的数量是确定的，必须有
+ * 足够的空闲Slot资源才能够将Job恢复执行。对于基于资源框架
+ * （Yarn、K8s、Mesos）的资源管理，则可以向资源管理集群申请新的
+ * 容器，在容器中启动TaskManger，然后将TaskManger的Slot分配给作
+ * 业。
+ *
+ * <h1>JobMaster和ResourceManager同时故障</h1>
+ * <p>在 YARN 部 署 模 式 下 ， 因 为 JobMaster 和 ResourceManager 都 在
+ * JobManager进程内，如果JobManager进程出现问题，通常是JobMaster
+ * 和ResourceManager同时故障，因为ResourceManager故障不会影响已
+ * 经运行的Task，相比JobMaster故障影响小一些，所以TaskManager会
+ * 优先恢复与新的JobMaster之间的连接，保留Slot一段时间，再同时尝
+ * 试着与ResourceManager建立连接。
  */
 public class JobMaster extends FencedRpcEndpoint<JobMasterId>
         implements JobMasterGateway, JobMasterService {
@@ -1048,6 +1132,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId>
     }
 
     private void startScheduling() {
+        //defaultScheduler调度
         schedulerNG.startScheduling();
     }
 

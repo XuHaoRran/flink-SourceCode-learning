@@ -24,7 +24,13 @@ import org.apache.flink.runtime.checkpoint.channel.ChannelStateWriter;
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 
-/** Basic interface for inputs of stream operators. */
+/** Basic interface for inputs of stream operators.
+ *
+ * StreamTaskNetworkInput 负 责 从 上 游 Task 获 取 数 据 ， 使 用
+ * InputGate作为底层读取数据。
+ * 2）StreamTaskSourceInput负责从外部数据源获取数据，本质上
+ * 是使用SourceFunction读取数据，交给下游的Task。
+ * */
 @Internal
 public interface StreamTaskInput<T> extends PushingAsyncDataInput<T>, Closeable {
     int UNSPECIFIED = -1;

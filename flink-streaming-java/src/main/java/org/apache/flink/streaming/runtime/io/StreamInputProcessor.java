@@ -29,6 +29,9 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface for processing records by {@link org.apache.flink.streaming.runtime.tasks.StreamTask}.
+ * 输 入 处 理 器 在 Flink 中 叫 作 StreamInputProcessor ， 是 对
+ * StreamTask中读取数据行为的抽象，在其实现中要完成数据的读取、
+ * 处 理 、 输 出 给 下 游 的 过 程 。
  */
 @Internal
 public interface StreamInputProcessor extends AvailabilityProvider, Closeable {

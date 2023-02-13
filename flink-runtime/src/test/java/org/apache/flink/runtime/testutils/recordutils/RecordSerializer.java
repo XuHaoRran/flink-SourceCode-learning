@@ -26,7 +26,10 @@ import org.apache.flink.types.Record;
 
 import java.io.IOException;
 
-/** Implementation of the (de)serialization and copying logic for the {@link Record}. */
+/** Implementation of the (de)serialization and copying logic for the {@link Record}.
+ * 数据记录序列化器在Flink中叫作RecordSerializer，负责数据的
+ * 序 列 化
+ * */
 public final class RecordSerializer extends TypeSerializer<Record> {
 
     private static final long serialVersionUID = 1L;

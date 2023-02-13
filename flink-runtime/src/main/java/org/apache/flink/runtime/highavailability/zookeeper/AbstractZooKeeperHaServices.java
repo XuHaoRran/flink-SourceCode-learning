@@ -37,7 +37,10 @@ import java.util.concurrent.Executor;
 
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** Abstract ZooKeeper based HA services. */
+/** Abstract ZooKeeper based HA services.
+ * 基于ZooKeeper高可用服务实现，使用ZooKeeper作为集群信息的
+ * 存储，能够实现真正的高可用。
+ * */
 public abstract class AbstractZooKeeperHaServices extends AbstractHaServices {
     /** The curator resource to use. */
     private final CuratorFrameworkWithUnhandledErrorListener curatorFrameworkWrapper;

@@ -38,6 +38,12 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * Implementation of {@link StreamTaskInput} that reads data from the {@link SourceOperator} and
  * returns the {@link DataInputStatus} to indicate whether the source state is available,
  * unavailable or finished.
+ *
+ * <p>StreamTask的数据读取方式有:
+ * 1.从 上 游 Task 获 取 数 据，使 用InputGate作为底层读取数据
+ * 2.StreamTaskSourceInputt负责从外部数据源获取数据，本质上
+ * 是使用SourceFunction读取数据，交给下游的Task
+ *
  */
 @Internal
 public class StreamTaskSourceInput<T> implements StreamTaskInput<T>, CheckpointableInput {

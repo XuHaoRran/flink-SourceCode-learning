@@ -64,7 +64,11 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.Preconditions.checkState;
 
-/** An input channel, which requests a remote partition queue. */
+/** An input channel, which requests a remote partition queue.
+ * <p>对应于远程的结果子分区的输入通道，用来表示跨网络的数据交
+ * 换，底层基于Netty。
+ *
+ * */
 public class RemoteInputChannel extends InputChannel {
     private static final Logger LOG = LoggerFactory.getLogger(RemoteInputChannel.class);
 

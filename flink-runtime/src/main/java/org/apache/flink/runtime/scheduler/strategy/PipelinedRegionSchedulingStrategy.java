@@ -39,6 +39,8 @@ import static org.apache.flink.util.Preconditions.checkState;
 
 /**
  * {@link SchedulingStrategy} instance which schedules tasks in granularity of pipelined regions.
+ *
+ * <p>SchedulingStrategy实例，以流水线区域的粒度调度任务。
  */
 public class PipelinedRegionSchedulingStrategy implements SchedulingStrategy {
     // 实际上就是DefaultScheduler对象
@@ -230,6 +232,7 @@ public class PipelinedRegionSchedulingStrategy implements SchedulingStrategy {
         // schedule regions in topological order.
         SchedulingStrategyUtils.sortPipelinedRegionsInTopologicalOrder(
                         schedulingTopology, regionsToSchedule)
+                // 把需要调度的scheduleRegion交给schedulerOperations.allocateSlotsAndDeploy
                 .forEach(this::scheduleRegion);
     }
 

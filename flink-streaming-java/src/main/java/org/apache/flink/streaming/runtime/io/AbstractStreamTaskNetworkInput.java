@@ -103,6 +103,7 @@ public abstract class AbstractStreamTaskNetworkInput<
                 }
 
                 if (result.isFullRecord()) {
+                    // 读取到完整数据记录之后，根据其类型进行不同的逻辑处理
                     processElement(deserializationDelegate.getInstance(), output);
                     return DataInputStatus.MORE_AVAILABLE;
                 }
@@ -132,6 +133,8 @@ public abstract class AbstractStreamTaskNetworkInput<
 
     private void processElement(StreamElement recordOrMark, DataOutput<T> output) throws Exception {
         if (recordOrMark.isRecord()) {
+            // 读取到数据，对于数据记录（StreamRecord），会在算子
+            // 中包装用户的业务逻辑，即使用DataStream编写的UDF (StreamTaskNetworkOutput)
             output.emitRecord(recordOrMark.asRecord());
         } else if (recordOrMark.isWatermark()) {
             statusWatermarkValve.inputWatermark(

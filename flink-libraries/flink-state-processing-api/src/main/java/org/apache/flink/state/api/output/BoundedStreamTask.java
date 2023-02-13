@@ -45,7 +45,7 @@ import java.util.Optional;
  * A stream task that pulls elements from an {@link Iterable} instead of the network. After all
  * elements are processed the task takes a snapshot of the subtask operator state. This is a shim
  * until stream tasks support bounded inputs.
- *
+ * <p> 该StreamTask是用在是模拟批处理的数据读取行为
  * @param <IN> Type of the input.
  * @param <OUT> Type of the output.
  * @param <OP> Type of the operator this task runs.

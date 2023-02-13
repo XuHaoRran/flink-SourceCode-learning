@@ -25,6 +25,10 @@ import java.io.Closeable;
 
 /**
  * An {@link Output} that measures the last emitted watermark with a {@link WatermarkGauge}.
+ * 此接口定义了统计Watermark监控指标计算行为，将最后一次发送
+ * 给下游的Watermark作为其指标值。其实现类负责计算指标值，在
+ * Flink Web UI中，通过可视化StreamGraph看到的Watermark监控信息
+ * 即来自于此。
  *
  * @param <T> The type of the elements that can be emitted.
  */
