@@ -29,6 +29,7 @@ import org.apache.flink.table.operations.QueryOperation;
 import org.apache.flink.table.types.DataType;
 
 /**
+ * Table是Table API的核心接口，提供了常见的SQL数据操作接口
  * The {@link Table} object is the core abstraction of the Table API. Similar to how the DataStream
  * API has {@code DataStream}s, the Table API is built around {@link Table}s.
  *

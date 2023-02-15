@@ -21,7 +21,10 @@ package org.apache.flink.table.api;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.table.expressions.Expression;
 
-/** A table that has been windowed for {@link GroupWindow}s. */
+/** A table that has been windowed for {@link GroupWindow}s.
+ * 用时间窗口进行分组之后的Table，按照时间对数据进行切分，
+ * 时间窗口必须是GroupBy中的第一项，且每个GroupBy只支持一个窗口。
+ * */
 @PublicEvolving
 public interface GroupWindowedTable {
 

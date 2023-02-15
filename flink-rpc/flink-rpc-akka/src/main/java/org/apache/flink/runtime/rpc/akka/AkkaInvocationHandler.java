@@ -127,7 +127,7 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
         Class<?> declaringClass = method.getDeclaringClass();
 
         Object result;
-
+        // 判断方法所属class
         if (declaringClass.equals(AkkaBasedEndpoint.class)
                 || declaringClass.equals(Object.class)
                 || declaringClass.equals(RpcGateway.class)
@@ -143,6 +143,12 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
                             + "fencing token. Please use RpcService#connect(RpcService, F, Time) with F being the fencing token to "
                             + "retrieve a properly FencedRpcGateway.");
         } else {
+            // rpc调用
+            //
+            // AkkaInvocationHandler中判断方法所属的类，如果是RPC方法，
+            // 则调用invokeRpc方法。将方法调用封装为RPCInvocation消息。如果
+            // 是本地则生成LocaRPCInvocation，本地消息不需要序列化，如果是远
+            // 程调用则创建RemoteRpcInvocation。
             result = invokeRpc(method, args);
         }
 
@@ -191,6 +197,12 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
         }
     }
 
+
+
+
+    /**
+     * 通知AkkaRpcActor进入START状态
+     */
     @Override
     public void start() {
         rpcEndpoint.tell(ControlMessages.START, ActorRef.noSender());
@@ -207,7 +219,9 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
 
     /**
      * Invokes a RPC method by sending the RPC invocation details to the rpc endpoint.
-     *
+     * 判断远程方法调用是否需要等待结果，如果无须等待（void），
+     * 则使用向Actor发送tell类型的消息，如果需要返回结果，则向Actor
+     * 发送ask类型的消息
      * @param method to call
      * @param args of the method call
      * @return result of the RPC; the result future is completed with a {@link TimeoutException} if
@@ -246,6 +260,7 @@ class AkkaInvocationHandler implements InvocationHandler, AkkaBasedEndpoint, Rpc
             // when needed.
             final Throwable callStackCapture = captureAskCallStack ? new Throwable() : null;
 
+            // 异步调用等待返回
             // execute an asynchronous call
             final CompletableFuture<?> resultFuture =
                     ask(rpcInvocation, futureTimeout)

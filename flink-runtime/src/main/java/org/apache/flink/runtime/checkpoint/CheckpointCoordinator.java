@@ -569,6 +569,7 @@ public class CheckpointCoordinator {
                                             // this must happen outside the coordinator-wide lock,
                                             // because it communicates with external services
                                             // (in HA mode) and may block for a while.
+                                            // 生成一个checkpointID
                                             long checkpointID =
                                                     checkpointIdCounter.getAndIncrement();
                                             return new Tuple2<>(plan, checkpointID);
@@ -768,7 +769,7 @@ public class CheckpointCoordinator {
 
         // send messages to the tasks to trigger their checkpoints
         List<CompletableFuture<Acknowledge>> acks = new ArrayList<>();
-        // 发送消息个相应的Task实例，触发检查点
+        // 发送消息个相应的Task实例，同步则触发Savepoint，异步则创建Checkpoint
         for (Execution execution : checkpoint.getCheckpointPlan().getTasksToTrigger()) { // getTasksToTrigger，表示JobMaster端触发检查点时信号被发往到哪些任务
             if (request.props.isSynchronous()) {
                 acks.add(
@@ -1109,7 +1110,7 @@ public class CheckpointCoordinator {
     /**
      * Receives an AcknowledgeCheckpoint message and returns whether the message was associated with
      * a pending checkpoint.
-     *
+     * 响应信息，判断checkpoint是否完成或者丢弃
      * @param message Checkpoint ack from the task manager
      * @param taskManagerLocationInfo The location of the acknowledge checkpoint message's sender
      * @return Flag indicating whether the ack'd checkpoint was associated with a pending
@@ -1141,7 +1142,8 @@ public class CheckpointCoordinator {
             if (shutdown) {
                 return false;
             }
-
+            // CheckpointCoordinator 在 触 发 检 查 点 时 ， 会 生 成 一 个
+            // PendingCheckpoint，保存所有算子的ID
             final PendingCheckpoint checkpoint = pendingCheckpoints.get(checkpointId);
 
             if (message.getSubtaskState() != null) {
@@ -1165,6 +1167,9 @@ public class CheckpointCoordinator {
                         message.getTaskExecutionId(),
                         message.getSubtaskState(),
                         message.getCheckpointMetrics())) {
+                    // PendingCheckpoint收到
+                    // 一个算子的完成检查点的消息时，就把这个算子从未完成检查点的节
+                    //点集合移动到已完成的集合。
                     case SUCCESS:
                         LOG.debug(
                                 "Received acknowledge message for checkpoint {} from task {} of job {} at {}.",
@@ -1172,7 +1177,8 @@ public class CheckpointCoordinator {
                                 message.getTaskExecutionId(),
                                 message.getJob(),
                                 taskManagerLocationInfo);
-
+                        // 当所有的算子都报告完成了检查点时，
+                        // CheckpointCoordinator 会 触 发 completePendingCheckpoint（ ）方法
                         if (checkpoint.isFullyAcknowledged()) {
                             completePendingCheckpoint(checkpoint);
                         }
@@ -1266,7 +1272,7 @@ public class CheckpointCoordinator {
 
     /**
      * Try to complete the given pending checkpoint.
-     *
+     * 向Task发送检查点完成信息
      * <p>Important: This method should only be called in the checkpoint lock scope.
      *
      * @param pendingCheckpoint to complete
@@ -1282,12 +1288,16 @@ public class CheckpointCoordinator {
         completedCheckpointStore.getSharedStateRegistry().checkpointCompleted(checkpointId);
 
         try {
+            // 把pendinCgCheckpoint转换为CompletedCheckpoint。
             completedCheckpoint = finalizeCheckpoint(pendingCheckpoint);
 
             // the pending checkpoint must be discarded after the finalization
             Preconditions.checkState(pendingCheckpoint.isDisposed() && completedCheckpoint != null);
 
             if (!props.isSavepoint()) {
+                // 把CompletedCheckpoint加入已完成的检查点集合,并从未完
+                //成检查点集合删除该检查点，CompletedCheckpoint中保存了状态的句
+                //柄、状态的存储路径、元信息的句柄等信息。
                 lastSubsumed =
                         addCompletedCheckpointToStoreAndSubsumeOldest(
                                 checkpointId,
@@ -1302,7 +1312,7 @@ public class CheckpointCoordinator {
             pendingCheckpoints.remove(checkpointId);
             scheduleTriggerRequest();
         }
-
+        // 完成检查点后，向各个算子发出RPC请求，通知该检查点已完成
         cleanupAfterCompletedCheckpoint(
                 pendingCheckpoint, checkpointId, completedCheckpoint, lastSubsumed, props);
     }
@@ -1343,6 +1353,7 @@ public class CheckpointCoordinator {
             dropSubsumedCheckpoints(checkpointId);
 
             // send the "notify complete" call to all vertices, coordinators, etc.
+            // 发送完成信息到所有Task的
             sendAcknowledgeMessages(
                     pendingCheckpoint.getCheckpointPlan().getTasksToCommitTo(),
                     checkpointId,
@@ -1421,6 +1432,7 @@ public class CheckpointCoordinator {
             List<ExecutionVertex> tasksToAbort)
             throws CheckpointException {
         try {
+            //
             final CompletedCheckpoint subsumedCheckpoint =
                     completedCheckpointStore.addCheckpointAndSubsumeOldestOne(
                             completedCheckpoint, checkpointsCleaner, this::scheduleTriggerRequest);

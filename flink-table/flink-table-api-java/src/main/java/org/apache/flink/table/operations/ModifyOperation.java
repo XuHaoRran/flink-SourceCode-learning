@@ -27,6 +27,8 @@ import java.util.List;
 /**
  * A {@link Operation} that describes the DML queries such as e.g. INSERT or conversion to a
  * DataStream.
+ * <p>SQL插入操作，在使用的时候，该操作会将
+ * Table转换为数据流写入到外部存储中
  *
  * <p>A tree of {@link QueryOperation} with a {@link ModifyOperation} on top represents a runnable
  * query that can be transformed into a graph of {@link Transformation} via {@link

@@ -65,7 +65,22 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * Akka rpc actor which receives {@link RpcInvocation}, {@link RunAsync} and {@link CallAsync}
+ * <p>Flink集群内部的通信依赖于Akka，AkkaRpcActor是其具体的实
+ * 现，负责处理如下类型消息。
+ * <p>（1）本地Rpc调用LocalRpcInvocation:
+ * LocalRpcInvocation类型的调用指派给RpcEndpoint进行处理，如
+ * 果有响应结果，则将响应结果返还给Sender。
+ * <p>（2）RunAsync & CallAsync:
+ * RunAsync、CallAsync类型的消息带有可以执行的代码，直接在
+ * Actor的线程中执行。
+ * <p>（3）控制消息ControlMessages:
+ * ControlMessage用来控制Actor的行为，ControlMessages#START
+ * 启动Actor开始处理消息，ControlMessages#STOP停止处理消息，停止
+ * 后收到的消息会被丢弃掉
+ *
+ * <p>AkkaRpcActor在RpcService.startServer（）中被创建。FencedAkkaRpcActor支持脑裂消息的处理</p>
+ *
+ * <p>Akka rpc actor which receives {@link RpcInvocation}, {@link RunAsync} and {@link CallAsync}
  * {@link ControlMessages} messages.
  *
  * <p>The {@link RpcInvocation} designates a rpc and is dispatched to the given {@link RpcEndpoint}
@@ -151,12 +166,28 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
         state = state.finishTermination();
     }
 
+    /**
+     * <p>消息处理入口
+     * AkkaRpcActor接收到的消息总共有3种
+     *  <p>1.握手信息:
+     *  如上文所述，在客户端构造时会通过ActorSelection发送过来。
+     *  收到消息后会检查接口、版本是否匹配，如果一致就返回成功。
+     *
+     * <p>2.控制信息:例 如 ， 在 RpcEndpoint 调 用 start 方 法 后 ， 会 向 自 身 发 送 一 条
+     * Processing.START消息来转换当前Actor的状态为STARTED，STOP也类
+     * 似，并且只有在Actor状态为STARTED时才会处理RPC请求。
+     *
+     * <p>3.RPC信息:通 过 解 析 RpcInvocation 获 取 方 法 名 和 参 数 类 型 ， 并 从
+     * RpcEndpoint类中找到Method对象，通过反射调用该方法。如果有返回
+     * 结果，会以Akka消息的形式发送回发送者。
+     * @return
+     */
     @Override
     public Receive createReceive() {
         return ReceiveBuilder.create()
-                .match(RemoteHandshakeMessage.class, this::handleHandshakeMessage)
-                .match(ControlMessages.class, this::handleControlMessage)
-                .matchAny(this::handleMessage)
+                .match(RemoteHandshakeMessage.class, this::handleHandshakeMessage) // 握手信息
+                .match(ControlMessages.class, this::handleControlMessage) // 控制信息
+                .matchAny(this::handleMessage) // rpc信息
                 .build();
     }
 
@@ -238,12 +269,14 @@ class AkkaRpcActor<T extends RpcEndpoint & RpcGateway> extends AbstractActor {
 
     private void handleHandshakeMessage(RemoteHandshakeMessage handshakeMessage) {
         if (!isCompatibleVersion(handshakeMessage.getVersion())) {
+            // 版本不兼容异常处理
             sendErrorIfSender(
                     new AkkaHandshakeException(
                             String.format(
                                     "Version mismatch between source (%s) and target (%s) rpc component. Please verify that all components have the same version.",
                                     handshakeMessage.getVersion(), getVersion())));
         } else if (!isGatewaySupported(handshakeMessage.getRpcGateway())) {
+            // rpcgateway不匹配异常处理
             sendErrorIfSender(
                     new AkkaHandshakeException(
                             String.format(

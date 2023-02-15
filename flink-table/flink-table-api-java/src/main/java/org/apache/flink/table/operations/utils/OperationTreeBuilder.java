@@ -442,17 +442,21 @@ public final class OperationTreeBuilder {
     }
 
     public QueryOperation filter(Expression condition, QueryOperation child) {
-
+        // 获取表达式解析器
         ExpressionResolver resolver = getResolver(child);
+        // 将未解析的表达式转换成解析后的表达式
         ResolvedExpression resolvedExpression = resolveSingleExpression(condition, resolver);
+        // 获取解析后表达式的输出类型
         DataType conditionType = resolvedExpression.getOutputDataType();
+        // 校验表达式的类型是否为boolean类型，filter表达式的输出类型必须为boolean
+        // 同理，其他类型的QueryOperation需要各自不同的校验条件
         if (!conditionType.getLogicalType().is(BOOLEAN)) {
             throw new ValidationException(
                     "Filter operator requires a boolean expression as input,"
                             + " but $condition is of type "
                             + conditionType);
         }
-
+        // 返回一个经过校验的合法的FilterQueryOpeartion，接下来就是要从Opeartion到Transoforamation的转换的了啊
         return new FilterQueryOperation(resolvedExpression, child);
     }
 

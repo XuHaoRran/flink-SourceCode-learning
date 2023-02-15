@@ -31,7 +31,18 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * This interface serves two purposes:
+ * <p>Table API和SQL API面向的是开发者，Planner是Flink引擎内部
+ * 的组件，是用户编写的代码和Flink运行时的中介，负责将用户代码转
+ * 换到Flink运行时可以识别的Transformation。
+ * <p>其主要为Flink中的Planner定义了两个关键行为：
+ * <p>SQL解析：将SQL字符串解析为对Table API调用的Operation
+ * 树。
+ * <p>关 系 代 数 到 Flink 执 行 计 划 ： 将 Operation 树 转 换 为
+ * Transformation。
+ * <p>在Blink Table模块和Flink Table模块中，各自实现了不同的优
+ * 化器
+ *
+ * <p>This interface serves two purposes:
  *
  * <ul>
  *   <li>SQL parser via {@link #getParser()} - transforms a SQL string into a Table API specific

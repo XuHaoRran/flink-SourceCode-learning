@@ -25,7 +25,20 @@ import org.apache.flink.runtime.metrics.scope.ScopeFormats;
 
 import javax.annotation.Nullable;
 
-/** Interface for a metric registry. */
+/** Interface for a metric registry.
+ * 指标注册中心在Flink中叫作MetricRegistry，追踪所有已注册的
+ * 指标（Metric）。指标组（MetricGroup）用来对指标进行分组管理，
+ * 指标汇报器（MetricReporter）用来对外披露指标，而指标注册中心
+ * 就是这两者的中介，通过指标注册中心就可以让指标汇报器感知到在
+ * 指标组中有哪些指标、指标的值是多少，然后指标汇报器可以采集指
+ * 标数据，并写入第三方监控系统中。
+ *
+ * <p>以 在 指 标 组 添 加 指 标 为 例 ， 其 过 程 为
+ * AbstractMetricGroup.addGroup→AbstractMetricGroup.addMetric→
+ * MetricRegistry.register→MetricReporter.notifyOfAddedMetric 。
+ * 删除指标的过程也是类似的。
+ *
+ * */
 public interface MetricRegistry {
 
     /**

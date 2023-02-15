@@ -40,7 +40,12 @@ import java.util.stream.Collectors;
 
 /**
  * Resolved and validated call expression for calling a function.
- *
+ * <p>CallExpression表示一个解析、验证后的函数调用表达式。其基本属性如下。
+ * 1）输出类型。
+ * 2）函数定义（FunctionDefinition）表达被调用的函数。
+ * 3）可选的ObjectIdentifier，用来追溯函数。ObjectIdentifier
+ * 用来表示Catalog中的表、视图、函数、类型等，使用全路径表示。由
+ * CatalogManager负责将ObjectIdentifier解析为具体的对象实体。
  * <p>A call contains:
  *
  * <ul>

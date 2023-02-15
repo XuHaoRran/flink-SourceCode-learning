@@ -700,9 +700,11 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
 
     @Override
     public Table sqlQuery(String query) {
+        // 首先将查询语句转换为QueryOperation
         List<Operation> operations = getParser().parse(query);
 
         if (operations.size() != 1) {
+            // 异常
             throw new ValidationException(
                     "Unsupported SQL query! sqlQuery() only accepts a single SQL query.");
         }
@@ -710,8 +712,11 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
         Operation operation = operations.get(0);
 
         if (operation instanceof QueryOperation && !(operation instanceof ModifyOperation)) {
+            // 使用QueryOperation创建Table对象，并返回Table对象
+            // Table对象可以转换未DataStream，也可以注册称一张表被TableAPI或SQL使用
             return createTable((QueryOperation) operation);
         } else {
+            // 异常
             throw new ValidationException(
                     "Unsupported SQL query! sqlQuery() only accepts a single SQL query of type "
                             + "SELECT, UNION, INTERSECT, EXCEPT, VALUES, and ORDER_BY.");
@@ -1729,7 +1734,13 @@ public class TableEnvironmentImpl implements TableEnvironmentInternal {
         TableSourceValidation.validateTableSource(tableSource, tableSource.getTableSchema());
     }
 
+    /**
+     * 从MOdifyOperation到Transformation的触发入口
+     * @param modifyOperations
+     * @return
+     */
     protected List<Transformation<?>> translate(List<ModifyOperation> modifyOperations) {
+        // 将ModifyOpeartion转换为可执行的
         return planner.translate(modifyOperations);
     }
 

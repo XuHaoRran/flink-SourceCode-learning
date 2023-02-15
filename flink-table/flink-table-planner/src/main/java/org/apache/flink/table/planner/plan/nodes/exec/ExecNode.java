@@ -36,7 +36,7 @@ import static org.apache.flink.table.planner.plan.nodes.exec.ExecNode.FIELD_NAME
 
 /**
  * The representation of execution information for a {@link FlinkPhysicalRel}.
- *
+ *  ExecNode 表 示 物 理 计 划
  * @param <T> The type of the elements that result from this node.
  */
 @JsonTypeInfo(

@@ -29,7 +29,7 @@ import org.apache.flink.table.connector.sink.DynamicTableSink;
 /**
  * Defines an external {@link TableSink} to emit a streaming {@link Table} with insert, update, and
  * delete changes.
- *
+ * <p>支持召回模式的TableSink，召回模式其实就是流上的update的核心。
  * <p>The table will be converted into a stream of accumulate and retraction messages which are
  * encoded as {@link Tuple2}. The first field is a {@link Boolean} flag to indicate the message
  * type. The second field holds the record of the requested type {@link T}.

@@ -20,7 +20,11 @@ package org.apache.flink.metrics;
 
 import org.apache.flink.annotation.Public;
 
-/** A Gauge is a {@link Metric} that calculates a specific value at a point in time. */
+/** A Gauge is a {@link Metric} that calculates a specific value at a point in time.指标瞬时值
+ * 用 来 记 录 一 个 指 标 的 瞬 间 值 。 以 Flink 中 的 指 标 为 例 ，
+ * TaskManager中的JVM堆内存使用量（JVM.Heap.Used），记录某个时刻
+ * TaskManager进程的JVM堆内存使用量。
+ * */
 @Public
 public interface Gauge<T> extends Metric {
 

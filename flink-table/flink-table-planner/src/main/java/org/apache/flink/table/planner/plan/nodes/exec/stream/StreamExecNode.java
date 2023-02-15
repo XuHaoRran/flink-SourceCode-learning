@@ -21,6 +21,9 @@ package org.apache.flink.table.planner.plan.nodes.exec.stream;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 
-/** Base class for stream {@link ExecNode}. */
+/** Base class for stream {@link ExecNode}.
+ * StreamExecNode 表 示 流 处 理 的 物 理 计
+ * 划，所有流处理物理计划节点都继承此接口。
+ * */
 @Internal
 public interface StreamExecNode<T> extends ExecNode<T> {}

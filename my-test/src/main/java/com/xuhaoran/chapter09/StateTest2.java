@@ -36,6 +36,7 @@ class CountWindowAverage extends RichFlatMapFunction<Tuple2<Long, Long>, Tuple2<
         sum.update(currentSum);
         // 当累计个数超过2个的时候进行求和，并将结果发送给下游
         if (currentSum.f0 >= 2){
+            // 用collector接口发送
             out.collect(new Tuple2<>(input.f0, currentSum.f1 / currentSum.f0));
             sum.clear();
         }

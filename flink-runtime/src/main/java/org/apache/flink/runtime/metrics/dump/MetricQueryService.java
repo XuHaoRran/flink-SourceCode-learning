@@ -49,6 +49,13 @@ import static org.apache.flink.runtime.metrics.dump.MetricDumpSerialization.Metr
  * <p>It is realized as an actor and can be notified of - an added metric by calling {@link
  * #addMetric(String, Metric, AbstractMetricGroup)} - a removed metric by calling {@link
  * #removeMetric(Metric)} - a metric dump request by calling {@link #queryMetrics(Time)}
+ *
+ * <p>指标查询服务在Flink中的接口是MetricQueryService，其通过继
+ * 承 RpcEndpoint 提 供 了 堆 外 调 用 的 能 力 ， 实 现 了
+ * MetricQueryServiceGateway接口，提供了指标查询的方法。
+ * <p>与其他Flink组件相比，MetricQueryService在一个独立的线程池
+ * 中执行，线程池中的线程池优先级比较低，启动时使用低优先级线程。
+ * <p>MetricQueryService中，使用KV的形式，按照指标类型来保存注册到Flink中的所有指标，
  */
 public class MetricQueryService extends RpcEndpoint implements MetricQueryServiceGateway {
     private static final Logger LOG = LoggerFactory.getLogger(MetricQueryService.class);
@@ -84,7 +91,7 @@ public class MetricQueryService extends RpcEndpoint implements MetricQueryServic
         serializer.close();
         return CompletableFuture.completedFuture(null);
     }
-
+    // 添加指标
     public void addMetric(String metricName, Metric metric, AbstractMetricGroup group) {
         runAsync(
                 () -> {
@@ -109,7 +116,7 @@ public class MetricQueryService extends RpcEndpoint implements MetricQueryServic
                     }
                 });
     }
-
+    // 删除指标
     public void removeMetric(Metric metric) {
         runAsync(
                 () -> {
@@ -124,7 +131,7 @@ public class MetricQueryService extends RpcEndpoint implements MetricQueryServic
                     }
                 });
     }
-
+    // 指标查询
     @Override
     public CompletableFuture<MetricDumpSerialization.MetricSerializationResult> queryMetrics(
             Time timeout) {

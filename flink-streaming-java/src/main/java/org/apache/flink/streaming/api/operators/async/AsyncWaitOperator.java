@@ -308,9 +308,12 @@ public class AsyncWaitOperator<IN, OUT>
         }
     }
 
+    // 异步算子恢复状态
     @Override
     public void initializeState(StateInitializationContext context) throws Exception {
         super.initializeState(context);
+        // 从OperatorStateStore中获取ListState类型的状态，由 OperatorStateStore 负 责 从 对 应 的
+        //StateBackend中读取状态重新赋予算子中的状态变量
         recoveredStreamElements =
                 context.getOperatorStateStore()
                         .getListState(

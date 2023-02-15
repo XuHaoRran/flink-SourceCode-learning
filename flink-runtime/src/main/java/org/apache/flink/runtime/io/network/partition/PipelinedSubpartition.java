@@ -770,9 +770,13 @@ public class PipelinedSubpartition extends ResultSubpartition
                 && getNumberOfFinishedBuffers() == 1;
     }
 
+    /**
+     * 写入buffer并通知
+     */
     private void notifyDataAvailable() {
         final PipelinedSubpartitionView readView = this.readView;
         if (readView != null) {
+            // 通知ResultSubPartitionView有可用数据，可以进行数据的读取了
             readView.notifyDataAvailable();
         }
     }

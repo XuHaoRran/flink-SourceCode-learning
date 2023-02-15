@@ -28,11 +28,12 @@ import java.util.Objects;
 
 /**
  * A reference to a field in an input. The reference contains:
- *
+ * 引用上游输入中的字段的表达式，包含如下属性
  * <ul>
- *   <li>type
- *   <li>index of an input the field belongs to
- *   <li>index of a field within the corresponding input
+ *   <li>type 输入字段的名称和类型
+ *   <li>index of an input the field belongs to 字段所属的上游输入编号（如Join运算），左输入编号为0，
+ * 右输入编号为1。
+ *   <li>index of a field within the corresponding input 字段在对应输入中的索引
  * </ul>
  */
 @PublicEvolving

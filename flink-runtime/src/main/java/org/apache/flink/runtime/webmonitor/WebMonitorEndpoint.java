@@ -182,6 +182,11 @@ import java.util.function.Function;
 /**
  * Rest endpoint which serves the web frontend REST calls.
  *
+ * <p>Flink提供了Rest API监控接口，被动接收外部应用的调用，可以
+ * 返回集群、组件、作业、Task、算子的状态。Flink自带的Web UI管理
+ * 界面中，也是通过这个接口来采集数据呈现的，它也被设计用于定制监视工具。
+ *
+ * <p>Rest API的核心实现类是WebMonitorEndpoint，该类也支持HA高可用。
  * @param <T> type of the leader gateway
  */
 public class WebMonitorEndpoint<T extends RestfulGateway> extends RestServerEndpoint

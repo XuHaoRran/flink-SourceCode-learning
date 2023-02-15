@@ -26,7 +26,10 @@ import org.apache.flink.table.delegation.Planner;
  * Covers all sort of Table operations such as queries(DQL), modifications(DML), definitions(DDL),
  * or control actions(DCL). This is the output of {@link Planner#getParser()} and {@link
  * Parser#parse(String)}.
- *
+ * <p>Operation是SQL操作的抽象，包含数据查询（DQL）、数据操作
+ * （DML）、数据定义（DDL）、数据控制（DCL），Table API的调用会
+ * 直接生成Operation，SQL语句操作使用Planner.parse（sql）方法解
+ * 析SQL语句后生成Operation。
  * @see QueryOperation
  * @see ModifyOperation
  */

@@ -21,10 +21,15 @@ package org.apache.flink.metrics;
 import org.apache.flink.annotation.Public;
 
 /**
- * Histogram interface to be used with Flink's metrics system.
+ * Histogram interface to be used with Flink's metrics system.直方图
  *
  * <p>The histogram allows to record values, get the current count of recorded values and create
  * histogram statistics for the currently seen elements.
+ *
+ * <p>指标的总量或者瞬时值都是单个值的指标，当想得到指标的最大
+ * 值、最小值、中位数等统计信息时，需要用到Histogram。Flink中属
+ * 于Histogram的指标很少，其中最重要的一个是算子的延迟。此项指标
+ * 会记录数据处理的延迟信息，对任务监控起到很重要的作用。
  */
 @Public
 public interface Histogram extends Metric {

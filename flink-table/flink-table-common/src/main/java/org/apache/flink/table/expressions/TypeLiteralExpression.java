@@ -28,6 +28,8 @@ import java.util.Objects;
 
 /**
  * Expression that wraps {@link DataType} as a literal.
+ * <p>将DataType包装为一个常量值，主要用在类型转换运算中。简化
+ * 了Expression的设计，只有CallExpression接受子表达式。
  *
  * <p>Expressing a type is primarily needed for casting operations. This expression simplifies the
  * {@link Expression} design as it makes {@link CallExpression} the only expression that takes

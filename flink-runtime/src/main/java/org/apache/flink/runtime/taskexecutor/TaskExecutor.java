@@ -1043,6 +1043,8 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
         final Task task = taskSlotTable.getTask(executionAttemptID);
 
         if (task != null) {
+            // JobMaster通过TaskManagerGateway触发TaskManager的检查点执
+            //行，TaskManager则转交给Task执行
             task.triggerCheckpointBarrier(checkpointId, checkpointTimestamp, checkpointOptions);
 
             return CompletableFuture.completedFuture(Acknowledge.get());

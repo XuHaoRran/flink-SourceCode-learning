@@ -20,7 +20,15 @@ package org.apache.flink.runtime.rpc;
 
 import java.util.concurrent.CompletableFuture;
 
-/** Interface for self gateways. */
+/** Interface for self gateways.
+ * RpcServer是RpcEndpoint的成员变量，负责接收响应远端的RPC消
+ * 息 请 求 。 其 有 RpcServer 有 两 个 实 现 ： AkkaInvocationHandler 和
+ * FencedAkkaInvocationHandler。
+ *
+ * <p>RpcServer的启动实质上是通知底层的AkkaRpcActor切换到START
+ * 状态，开始处理远程调用请求
+ *
+ * */
 public interface RpcServer extends StartStoppable, MainThreadExecutable, RpcGateway {
 
     /**

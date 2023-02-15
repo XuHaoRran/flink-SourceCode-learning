@@ -32,6 +32,9 @@ import org.apache.flink.table.connector.sink.DynamicTableSink;
  * delete changes. The {@link Table} must be have unique key fields (atomic or composite) or be
  * append-only.
  *
+ * <p>：Upsert，有则更新，无则插入。目
+ * 前有ElasticSearch、HBase、JDBC 3种实现
+ *
  * <p>If the {@link Table} does not have a unique key and is not append-only, a {@link
  * TableException} will be thrown.
  *

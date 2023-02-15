@@ -143,6 +143,16 @@ public abstract class RecordWriter<T extends IOReadableWritable> implements Avai
 
         targetPartition.emitRecord(serializeRecord(serializer, record), targetSubpartition);
 
+        /**
+         * 如果是立即刷新，则相当于一条记录向下游推送一次，延迟最
+         * 低，但是吞吐量会下降，Flink默认的做法是单独启动一个线程，默认
+         * 100ms刷新一次，本质上是一种mini-batch，这种mini-batch只是为了
+         * 增大吞吐量，与Spark的mini-batch处理不是一个概念
+         *
+         * ResultPartition遍历自身的PipelinedSubPartition，逐一进行
+         * Flush。Flush之后，通知ResultSubPartitionView有可用数据，可以
+         * 进行数据的读取了
+         */
         if (flushAlways) {
             targetPartition.flush(targetSubpartition);
         }

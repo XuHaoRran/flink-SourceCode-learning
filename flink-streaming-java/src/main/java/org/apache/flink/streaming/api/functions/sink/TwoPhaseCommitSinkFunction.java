@@ -69,6 +69,12 @@ import static org.apache.flink.util.Preconditions.checkState;
  * {@link CheckpointedFunction} and {@link CheckpointListener}. User should provide custom {@code
  * TXN} (transaction handle) and implement abstract methods handling this transaction handle.
  *
+ * <p>从TwoPhaseCommitSinkFunction的类体系来看，其比较特殊的地
+ * 方是继承了CheckpointedFunction接口，在预提交阶段，能够通过检
+ * 查点将待写出的数据可靠地存储起来；继承了CheckpointListener接
+ * 口，在提交阶段，能够接收JobMaster的确认通知，触发提交外部事务。详细参考《Flink内核原理与实现》P415
+ *
+ *
  * @param <IN> Input type for {@link SinkFunction}.
  * @param <TXN> Transaction to store all of the information required to handle a transaction.
  * @param <CONTEXT> Context that will be shared across all invocations for the given {@link
@@ -171,7 +177,9 @@ public abstract class TwoPhaseCommitSinkFunction<IN, TXN, CONTEXT> extends RichS
 
     /**
      * Method that starts a new transaction.
-     *
+     * 开启一个事务，在临时目录下创建一个临
+     * 时文件，之后写入数据到该文件中。此过程为不同的事务创建隔离，
+     * 避免数据混淆。
      * @return newly created transaction.
      */
     protected abstract TXN beginTransaction() throws Exception;
@@ -181,6 +189,10 @@ public abstract class TwoPhaseCommitSinkFunction<IN, TXN, CONTEXT> extends RichS
      * prepare the transaction for a commit that might happen in the future. After this point the
      * transaction might still be aborted, but underlying implementation must ensure that commit
      * calls on already pre committed transactions will always succeed.
+     * 在预提交阶段，将缓存数据块写出到创建的临时
+     * 文件，然后关闭该文件，确保不再写入新数据到该文件，同时开启一
+     * 个新事务，执行属于下一个检查点的写入操作。此过程用于准备需要
+     * 提交的数据，并且将不同事务的数据隔离开来。
      *
      * <p>Usually implementation involves flushing the data.
      */
@@ -190,6 +202,11 @@ public abstract class TwoPhaseCommitSinkFunction<IN, TXN, CONTEXT> extends RichS
      * Commit a pre-committed transaction. If this method fail, Flink application will be restarted
      * and {@link TwoPhaseCommitSinkFunction#recoverAndCommit(Object)} will be called again for the
      * same transaction.
+     *
+     * 在提交阶段，以原子操作的方式将上一阶段的文件写
+     * 入真正的文件目录下。如果提交失败，Flink应用会重启，并调用
+     * TwoPhaseCommitSinkFunction#recoverAndCommit方法尝试恢复并重新
+     * 提交事务。
      */
     protected abstract void commit(TXN transaction);
 
@@ -203,7 +220,7 @@ public abstract class TwoPhaseCommitSinkFunction<IN, TXN, CONTEXT> extends RichS
         commit(transaction);
     }
 
-    /** Abort a transaction. */
+    /** Abort a transaction. 一旦终止事务，删除临时文件 */
     protected abstract void abort(TXN transaction);
 
     /** Abort a transaction that was rejected by a coordinator after a failure. */

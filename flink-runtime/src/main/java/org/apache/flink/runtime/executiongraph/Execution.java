@@ -889,7 +889,7 @@ public class Execution
             long checkpointId, long timestamp, CheckpointOptions checkpointOptions) {
         return triggerCheckpointHelper(checkpointId, timestamp, checkpointOptions);
     }
-
+    // 通知Task执行检查点
     private CompletableFuture<Acknowledge> triggerCheckpointHelper(
             long checkpointId, long timestamp, CheckpointOptions checkpointOptions) {
         // 将assignedResource字段的值赋给slot变量，然后通过它获取TaskManagerGateway对象，进而将信号传递给
@@ -898,7 +898,8 @@ public class Execution
 
         if (slot != null) {
             final TaskManagerGateway taskManagerGateway = slot.getTaskManagerGateway();
-
+            // JobMaster通过TaskManagerGateway触发TaskManager的检查点执
+            //     行，TaskManager则转交给Task执行
             return taskManagerGateway.triggerCheckpoint(
                     attemptId, getVertex().getJobId(), checkpointId, timestamp, checkpointOptions);
         }

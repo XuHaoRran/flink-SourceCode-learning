@@ -31,6 +31,12 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.util.Collector;
 
 /**
+ * <p>在 Flink 中 有 两 个 表 函 数 ， 分 别 叫 作 TableFunction 和
+ * AsyncTableFunction（异步执行表函数），简称UDTF。
+ * 表函数可以接收一个或者多个字段作为参数，输出多行多列数
+ * 据。可以是0行、1行或者多行，每行中包含一个或者多个字段。
+ *
+ *
  * Base class for a user-defined table function. A user-defined table function maps zero, one, or
  * multiple scalar values to zero, one, or multiple rows (or structured types). If an output record
  * consists of only one field, the structured record can be omitted, and a scalar value can be

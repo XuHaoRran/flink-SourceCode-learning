@@ -24,7 +24,9 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 
 /**
  * Defines an external stream table and provides read access to its data.
- *
+ * 流数据源抽象，区分了是无界数据还是
+ * 有界数据，在Blink中实现了批流统一，批和流的数据源均使用该接口
+ * 的实现类。
  * @param <T> Type of the {@link DataStream} created by this {@link TableSource}.
  * @deprecated This interface has been replaced by {@link DynamicTableSource}. The new interface
  *     produces internal data structures. See FLIP-95 for more information.

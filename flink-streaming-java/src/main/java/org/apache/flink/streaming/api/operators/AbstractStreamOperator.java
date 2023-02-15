@@ -344,6 +344,7 @@ public abstract class AbstractStreamOperator<OUT>
             CheckpointOptions checkpointOptions,
             CheckpointStreamFactory factory)
             throws Exception {
+
         return stateHandler.snapshotState(
                 this,
                 Optional.ofNullable(timeServiceManager),

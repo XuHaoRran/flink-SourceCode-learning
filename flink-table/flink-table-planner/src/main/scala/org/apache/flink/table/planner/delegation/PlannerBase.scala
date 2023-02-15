@@ -72,6 +72,12 @@ import scala.collection.mutable
  * Implementation of a [[Planner]]. It supports only streaming use cases. (The new
  * [[org.apache.flink.table.sources.InputFormatTableSource]] should work, but will be handled as
  * streaming sources, and no batch specific optimizations will be applied).
+ * PlannerBase是Blink Table模块中的规划器基类，其有两个子类
+ * StreamPlanner和BatchPlanner，分别为流和批提供不同的优化逻辑。
+ * 核 心 的 优 化 、 转 换 流 程 定 义 在 PlannerBase#translate 中 。
+ * StreamPlanner和BatchPlanner最重要的区别是使用了不同的优化器。
+ * Flink StreamPlanner是Flink Table中的优化器，在当前实现中
+ * 只有流上的优化，没有批上的优化。
  *
  * @param executor
  *   instance of [[Executor]], needed to extract [[StreamExecutionEnvironment]] for
@@ -190,13 +196,20 @@ abstract class PlannerBase(
     if (modifyOperations.isEmpty) {
       return List.empty[Transformation[_]]
     }
-
+    // 将ModifyOpeartion转换为Calcite RelNode逻辑计划
     val relNodes = modifyOperations.map(translateToRel)
+      // 优化Calcite RelNode逻辑计划
     val optimizedRelNodes = optimize(relNodes)
+      // 将RelNode逻辑计划转换为物理计划，从FlinkPhysicalRel DAG到ExecNode DAG
     val execGraph = translateToExecNodeGraph(optimizedRelNodes, isCompiled = false)
+      // 从ExecNode DAG转换为Transformation DAG（即算子DAG）
     val transformations = translateToPlan(execGraph)
     afterTranslation()
     transformations
+
+      // =》至 此 ， SQL 语 句 被 转 换 为 Transformation 流 水 线 ， 有 了
+      //Transformation就可以进入到转换为StreamGraph的过程中，最终交给
+      //Flink集群真正的执行起来。
   }
 
   /** Converts a relational tree of [[ModifyOperation]] into a Calcite relational expression. */

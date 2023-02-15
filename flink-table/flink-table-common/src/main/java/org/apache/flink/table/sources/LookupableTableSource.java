@@ -28,6 +28,9 @@ import org.apache.flink.table.functions.TableFunction;
  * A {@link TableSource} which supports for lookup accessing via key column(s). For example, MySQL
  * TableSource can implement this interface to support lookup accessing. When temporal join this
  * MySQL table, the runtime behavior could be in a lookup fashion.
+ * 流表Join中的维表：对于流表Join这一类的运算，本质上来说
+ * 是 对 流 上 的 数 据 查 询 外 部 维 表 进 行 字 段 补 全 ， Flink 提 供 了
+ * LookupableTableSource，按照Join条件中的字段进行关联
  *
  * @param <T> type of the result
  * @deprecated This interface will not be supported in the new source design around {@link

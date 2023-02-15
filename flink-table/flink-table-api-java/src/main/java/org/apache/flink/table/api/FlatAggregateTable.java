@@ -24,6 +24,8 @@ import org.apache.flink.table.expressions.Expression;
 /**
  * A table that performs flatAggregate on a {@link Table}, a {@link GroupedTable} or a {@link
  * WindowGroupedTable}.
+ * 对分组之后的Table（如GroupedTable和WindowedGroupTable）执
+ * 行TableAggregationFunction（表聚合函数）的结果
  */
 @PublicEvolving
 public interface FlatAggregateTable {

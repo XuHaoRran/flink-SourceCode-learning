@@ -35,7 +35,12 @@ import static org.apache.flink.runtime.state.KeyGroupRangeAssignment.UPPER_BOUND
 
 /**
  * This class provides entry points for loading an existing savepoint, or a new empty savepoint.
- *
+ * 保存点在Flink中叫作Savepoint，是基于Flink检查点机制的应用
+ * 完整快照备份机制，用来保存状态，可以在另一个集群或者另一个时
+ * 间点，从保存的状态中将作业恢复回来，适用于应用升级、集群迁
+ * 移、Flink集群版本更新、A/B测试以及假定场景、暂停和重启、归档
+ * 等场景。保存点可以视为一个 （算子ID→State）的Map，对于每一个
+ * 有状态的算子，Key是算子ID，Value是算子的State。
  * @see ExistingSavepoint
  * @see NewSavepoint
  * @see SavepointReader

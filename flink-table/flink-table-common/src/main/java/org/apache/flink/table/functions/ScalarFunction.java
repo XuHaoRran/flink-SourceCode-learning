@@ -33,6 +33,10 @@ import org.apache.flink.table.types.inference.TypeInference;
  * Base class for a user-defined scalar function. A user-defined scalar function maps zero, one, or
  * multiple scalar values to a new scalar value.
  *
+ * <p>在Flink中叫作Scalar Function，简称UDF。
+ * 标量函数就是对一行数据中的一个或者多个字段做处理，计算之
+ * 后给出一个单值，其实就是对每一列计算出一个新字段。
+ *
  * <p>The behavior of a {@link ScalarFunction} can be defined by implementing a custom evaluation
  * method. An evaluation method must be declared publicly and named <code>eval</code>. Evaluation
  * methods can also be overloaded by implementing multiple methods named <code>eval</code>.

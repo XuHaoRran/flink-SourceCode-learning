@@ -31,6 +31,28 @@ import java.util.concurrent.TimeUnit;
  * Interface for rpc services. An rpc service is used to start and connect to a {@link RpcEndpoint}.
  * Connecting to a rpc server will return a {@link RpcGateway} which can be used to call remote
  * procedures.
+ *
+ * <p>RpcService是RpcEndpoint的成员变量，RpcService的作用如下。
+ * <p>1）启动和停止RpcServer和连接RpcEndpoint。
+ * <p>2） 根 据 指 定 的 连 接 地 址 ， 连 接 到 RpcServer 会 返 回 一 个
+ * RpcGateway。分为带FencingToken和不带FencingToken的版本。
+ * <p>3）延迟/立刻调度Runnable、Callable。
+ *
+ * <p>RpcService 会 在 ClusterEntrypoint （ JobMaster ） 和
+ * TaskManagerRunner（TaskExecutor）启动的过程中被初始化并启动。
+ * AkkaRpcService是RpcService的唯一实现。AkkaRpcService中包
+ * 含了一个ActorSystem，保存了ActorRef和RpcEndpoint之间的映射关
+ * 系。RpcService跟RpcGateway类似，也提供了获取地址和端口的方法。
+ *
+ * <p>RpcService会根据RpcEndpoint（Fenced和非Fenced）的类型构建
+ * 不同的AkkaRpcActor（Fenced和非Fenced），并保存AkkaRpcActor引
+ * 用和RpcEndpoint的对应关系。创建出来的AkkaRpcActor是底层Akka调
+ * 用的实际接收者，RPC的请求在客户端被封装成RpcInvocation对象，
+ * 以Akka消息的形式发送。
+ *
+ * <p>同 时 也 要 完 成 RpcServer 的 构 建 ， RpcServer 也 分 为 Fenced 与 非
+ * Fenced两类。最终通过Java的动态代理将所有的
+ * 消息调用转发到InvocationHandler
  */
 public interface RpcService {
 
@@ -53,7 +75,10 @@ public interface RpcService {
     /**
      * Connect to a remote rpc server under the provided address. Returns a rpc gateway which can be
      * used to communicate with the rpc server. If the connection failed, then the returned future
-     * is failed with a {@link RpcConnectionException}.
+     * is failed with a {@link RpcConnectionException}. 和对端的RpcEndpoint建立链接，
+     * connect （ ） 方 法 根 据 给 的 地 址 返 回
+     * InvocationHandler （ AkkaInvocationHandler 或 者
+     * FencedAkkaInvocationHandler）。
      *
      * @param address Address of the remote rpc server
      * @param clazz Class of the rpc gateway to return

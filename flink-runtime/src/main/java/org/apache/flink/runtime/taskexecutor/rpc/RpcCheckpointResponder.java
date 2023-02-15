@@ -46,6 +46,18 @@ public class RpcCheckpointResponder implements CheckpointResponder {
             long checkpointId,
             CheckpointMetrics checkpointMetrics,
             TaskStateSnapshot subtaskState) {
+        // 向JobMaster中checkpointcoordinator发送消息报告checkpoint完成
+
+        // 在向JobMaster汇报的消息中，TaskStateSnapshot中保存了本次
+        // 检查点的State数据，如果是内存型的StateBackend，那么其中保存的
+        // 是真实的State数据，如果是文件型的StateBackend，其中保存的则是
+        // 状态的句柄（StateHandle）。在分布式文件系统中的保存路径也是通
+        // 过TaskStateSnapshot中保存的信息恢复回来的。
+        // 状态的句柄分为OperatorStateHandle和KeyedStateHandle，分别
+        // 对应于OperatorState和KyedState，同时也区分了原始状态和托管状
+        // 态。
+        // RpcCheckpointResponder底层依赖Flink的RPC框架的方式远程调
+        // 用JobMaster的相关方法来完成报告事件。
         checkpointCoordinatorGateway.acknowledgeCheckpoint(
                 jobID,
                 executionAttemptID,

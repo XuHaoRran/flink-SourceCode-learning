@@ -20,7 +20,12 @@ package org.apache.flink.metrics;
 
 import org.apache.flink.annotation.Public;
 
-/** Metric for measuring throughput. */
+/** Metric for measuring throughput.
+ * 平均值。用来记录一个指标在某个时间段内的平均值。Flink中类似的指标
+ * 有Task/算子中的numRecordsInPerSecond，记录此Task或者算子每秒
+ * 接收的记录数。
+ *
+ * */
 @Public
 public interface Meter extends Metric {
 

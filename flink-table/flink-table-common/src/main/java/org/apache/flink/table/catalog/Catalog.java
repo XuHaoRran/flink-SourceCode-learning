@@ -51,6 +51,13 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * from a registered catalog. It connects a registered catalog and Flink's Table API. This interface
  * only processes permanent metadata objects. In order to process temporary objects, a catalog can
  * also implement the {@link TemporaryOperationListener} interface.
+ *
+ * 元数据管理的核心是元数据的组织和元数据类型的定义。Flink中
+ * 使用层次结构来保存元数据。
+ * 元数据包含的类型有：库、表、视图、UDF、表字段定义。
+ * Catalog用来管理的核心抽象，Catalog接口中定义了一系列操作
+ * 元数据的方法。
+ *
  */
 @PublicEvolving
 public interface Catalog {

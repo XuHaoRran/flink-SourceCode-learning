@@ -1336,7 +1336,7 @@ public abstract class StreamTask<OUT, OP extends StreamOperator<OUT>>
                 checkpointMetaData.getCheckpointId(),
                 checkpointType,
                 getName());
-
+        // 如 果 Task 是 Running 状 态 ， 那 就 可 以 执 行 检 查 点
         if (isRunning) {
             actionExecutor.runThrowing(
                     () -> {

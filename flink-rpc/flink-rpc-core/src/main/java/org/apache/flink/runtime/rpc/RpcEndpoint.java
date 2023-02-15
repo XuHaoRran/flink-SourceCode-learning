@@ -49,7 +49,20 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * Base class for RPC endpoints. Distributed components which offer remote procedure calls have to
+ * RpcGateway提供了行为定义，RpcEndpoint则在RpcGateway的基础
+ * 上提供了RPC服务组件的生命周期管理，Flink中所有提供远程调用服
+ * 务 的 组 件 （ Dispatcher 、 JobMaster 、 ResourceManager 、
+ * TaskExecutor等）都继承自RpcEndpoint
+ * <p>在Flink的设计中，同一个RpcEndpoint中的所有调用只有一个线
+ * 程处理，叫作Endpoint的主线程。与Akka的Actor模型一样，所有对状
+ * 态数据的修改在同一个线程中执行，所以不存在并发的问题。
+ * <p>上面的重要子类都使用了RpcService作为参数，用来启动RPC通信
+ * 服 务 ， RpcEndpoint 提 供 远 程 通 信 特 性 ， RpcService 负 责 管 理
+ * RpcEndpoint生命周期。RPCEndpoint是RpcService、RPCServer的结合
+ * 之处
+ *
+ *
+ * <p>Base class for RPC endpoints. Distributed components which offer remote procedure calls have to
  * extend the RPC endpoint base class. An RPC endpoint is backed by an {@link RpcService}.
  *
  * <h1>Endpoint and Gateway</h1>
@@ -137,7 +150,8 @@ public abstract class RpcEndpoint implements RpcGateway, AutoCloseableAsync {
     protected RpcEndpoint(final RpcService rpcService, final String endpointId) {
         this.rpcService = checkNotNull(rpcService, "rpcService");
         this.endpointId = checkNotNull(endpointId, "endpointId");
-
+        // 调用RpcService启动RpcEndpoint，进入可以接受处理请求的状态，最后再将RpcServer绑定到主线程上真正执行起来
+        // RpcServer负责接受信息，分发给对应的处理逻辑
         this.rpcServer = rpcService.startServer(this);
         this.resourceRegistry = new CloseableRegistry();
 

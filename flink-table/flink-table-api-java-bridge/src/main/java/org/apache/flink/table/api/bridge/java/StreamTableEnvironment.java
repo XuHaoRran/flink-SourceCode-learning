@@ -49,7 +49,8 @@ import org.apache.flink.types.RowKind;
 /**
  * This table environment is the entry point and central context for creating Table and SQL API
  * programs that integrate with the Java-specific {@link DataStream} API.
- *
+ * StreamTableEnvironment与TableEnvironment接口相比，扩展了
+ * 与 DataStream 的 相 互 转 换 能 力 。
  * <p>It is unified for bounded and unbounded data processing.
  *
  * <p>A stream table environment is responsible for:

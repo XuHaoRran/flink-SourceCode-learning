@@ -144,6 +144,16 @@ import org.apache.flink.runtime.state.FunctionSnapshotContext;
  * }
  * }</pre>
  *
+ * <p>-----------------------------------------------
+ * <p>函数的状态恢复主要是针对有状态函数，这些函数的共同特点是
+ * 继承了CheckpointedFunction或者ListCheckpointed接口。在Flink内
+ * 置的有状态函数主要是Source、Sink函数，为了支持端到端严格一次
+ * 的情况，Source函数需要能够保存数据读取的断点位置，作业故障恢
+ * 复后能够从断点位置开始读取，Kafka等连接器中的读取数据的函数就
+ * 实现了CheckpointedFunction。同样在Sink写出数据到外部存储的时
+ * 候 ， 有 时 也 会 需 要 恢 复 状 态 ， 如 BucketingSink 和
+ * TwoPhaseCommitSinkFunction。函数状态恢复逻辑各不相同，所以由
+ * 各个连接器自己实现
  * @see ListCheckpointed
  * @see RuntimeContext
  */

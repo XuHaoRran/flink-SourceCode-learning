@@ -332,6 +332,7 @@ public class RemoteInputChannel extends InputChannel {
 
     /**
      * Enqueue this input channel in the pipeline for notifying the producer of unannounced credit.
+     * 当有数据可供消费时，调用这个方法
      */
     private void notifyCreditAvailable() throws IOException {
         checkPartitionRequestQueueInitialized();

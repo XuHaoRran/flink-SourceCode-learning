@@ -63,16 +63,25 @@ import static org.apache.flink.table.expressions.ApiExpressionUtils.valueLiteral
  * Tries to resolve all unresolved expressions such as {@link UnresolvedReferenceExpression} or
  * calls such as {@link BuiltInFunctionDefinitions#OVER}.
  *
+ * <p>ExpressionResolver在Table API中使用，将Table API中原始的
+ * Expression表达式（未解析）解析成ResolvedExpression。解析的内
+ * 容 包 括 一 般 的 表 达 式 和 函 数 调 用
+ * （BuiltInFunctionDefinitions#OVER）。
+ * <p>ExpressionResolver内置了一组解析规则，解析行为如下。
+ *
  * <p>The default set of rules ({@link ExpressionResolver#getAllResolverRules()}) will resolve
  * following references:
  *
  * <ul>
- *   <li>flatten '*' and column functions to all fields of underlying inputs
- *   <li>join over aggregates with corresponding over windows into a single resolved call
- *   <li>resolve remaining unresolved references to fields, tables or local references
+ *   <li>flatten '*' and column functions to all fields of underlying inputs 展平∗号，并解析函数中的列名对下层输入列的引用。
+ *   <li>join over aggregates with corresponding over windows into a single resolved call 将Over聚合和Over Window合并到一个函数调用。
+ *   <li>resolve remaining unresolved references to fields, tables or local references 解析所有未经解析的引用，这些引用可能是对字段、表的引用
+ * 或本地引用（LocalReferenceExpression）。
  *   <li>replace calls to {@link BuiltInFunctionDefinitions#FLATTEN}, {@link
- *       BuiltInFunctionDefinitions#WITH_COLUMNS}, etc.
- *   <li>performs call arguments types validation and inserts additional casts if possible
+ *       BuiltInFunctionDefinitions#WITH_COLUMNS}, etc. 替 换 函 数 调 用 ， 如 BuiltInFunctionDefinitions#FLATTEN ，
+ * BuiltInFunctionDefinitions#WITH_COLUMNS。
+ *   <li>performs call arguments types validation and inserts additional casts if possible  执行所有函数调用的入参类型校验，如果有必要则进行类型转
+ * 换
  * </ul>
  */
 @Internal

@@ -67,6 +67,11 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLegacyInfoT
  *     dedicated classes {@link Schema} and {@link ResolvedSchema}. Use {@link Schema} for
  *     declaration in APIs. {@link ResolvedSchema} is offered by the framework after resolution and
  *     validation.
+ *
+ * <p>able Source和Table Sink需要具备对外部数据源的描述能力，
+ * 所以Flink定义了TableSchema对象来定义表的字段名称和字段类型、
+ * 表的存储形式（CSV、Parquet、JSON等），同时还具备字段类型和格
+ * 式的转换能力
  */
 @Deprecated
 @PublicEvolving

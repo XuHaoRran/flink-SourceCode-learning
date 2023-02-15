@@ -21,6 +21,9 @@ package org.apache.flink.table.planner.plan.nodes.exec.batch;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.table.planner.plan.nodes.exec.ExecNode;
 
-/** Base class for batch {@link ExecNode}. */
+/** Base class for batch {@link ExecNode}.
+ * BatchExecNode表示批处
+ * 理的物理计划，所有的物理计划节点都继承此接口
+ * */
 @Internal
 public interface BatchExecNode<T> extends ExecNode<T> {}

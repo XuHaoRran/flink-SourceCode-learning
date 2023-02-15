@@ -23,7 +23,7 @@ import org.apache.flink.annotation.Internal;
 /**
  * An {@link Operation} that describes the catalog/database switch statements, e.g. USE CATALOG or
  * USE [catalogName.]dataBaseName.
- *
+ * 切换Schema
  * <p>Different sub operations can represent their special meanings. For example, a use catalog
  * operation means switching current catalog to another, while use database operation means
  * switching current database.

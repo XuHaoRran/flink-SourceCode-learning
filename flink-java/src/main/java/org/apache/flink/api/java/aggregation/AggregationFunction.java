@@ -20,7 +20,12 @@ package org.apache.flink.api.java.aggregation;
 
 import org.apache.flink.annotation.Internal;
 
-/** @param <T> The type to be aggregated. */
+/**
+ * 在Flink中叫作Aggregation Function，简称UDAF。
+ * 聚合函数很好理解，Count、Sum等统计函数都是此类，可将多行
+ * 数据的一列值经过运算之后输出单个值。
+ *
+ * @param <T> The type to be aggregated.  */
 @Internal
 public abstract class AggregationFunction<T> implements java.io.Serializable {
     private static final long serialVersionUID = 1L;

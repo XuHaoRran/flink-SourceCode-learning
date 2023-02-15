@@ -26,7 +26,7 @@ import org.apache.flink.table.connector.sink.DynamicTableSink;
 
 /**
  * Defines an external {@link TableSink} to emit streaming {@link Table} with only insert changes.
- *
+ * <p>AppendStreamTableSink：追加模式的TableSink，支持追加写入，不支持更新
  * <p>If the {@link Table} is also modified by update or delete changes, a {@link TableException}
  * will be thrown.
  *

@@ -22,7 +22,7 @@ import org.apache.flink.table.operations.Operation;
 
 /**
  * A {@link Operation} that describes the DROP DDL statements, e.g. DROP TABLE or DROP DATABASE.
- *
+ * <p>删除操作，可以删除Database、表、视图、函数等的元数据。
  * <p>Different sub operations can have their special target name. For example, a drop table
  * operation may have a target table name and a flag to describe if is exists.
  */

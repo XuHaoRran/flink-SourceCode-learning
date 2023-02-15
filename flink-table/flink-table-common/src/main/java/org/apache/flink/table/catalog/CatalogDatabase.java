@@ -23,7 +23,10 @@ import org.apache.flink.annotation.PublicEvolving;
 import java.util.Map;
 import java.util.Optional;
 
-/** Interface of a database in a catalog. */
+/** Interface of a database in a catalog.
+ * CatalogTable对应于数据库中的表，CatalogView对应于数据库中
+ * 的视图，两者相似，所以继承了共同的CatalogBaseTable接口
+ * */
 @PublicEvolving
 public interface CatalogDatabase {
     /** Get a map of properties associated with the database. */

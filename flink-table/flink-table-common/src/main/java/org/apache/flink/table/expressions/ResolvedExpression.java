@@ -35,6 +35,8 @@ import java.util.List;
  *
  * <p>Resolved expression are the output of the API to the planner and are pushed from the planner
  * into interfaces, for example, for predicate push-down.
+ *
+ * <p>ResolvedExpression与Expression相比，不包含未解析的子表达式，并且添加了数据的输出类型。
  */
 @PublicEvolving
 public interface ResolvedExpression extends Expression {

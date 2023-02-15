@@ -170,9 +170,16 @@ public class TableImpl implements Table {
         return createTable(operationTreeBuilder.alias(Arrays.asList(fields), operationTree));
     }
 
+    /**
+     * 接受Expression形式的filter表达式
+     * @param predicate
+     * @return
+     */
     @Override
     public Table filter(Expression predicate) {
+        // 首先解析表达式
         Expression resolvedCallPredicate = predicate.accept(lookupResolver);
+        // 将filter转换为FilterOperation，返回一个新的Table带有新的QueryOperation
         return createTable(operationTreeBuilder.filter(resolvedCallPredicate, operationTree));
     }
 

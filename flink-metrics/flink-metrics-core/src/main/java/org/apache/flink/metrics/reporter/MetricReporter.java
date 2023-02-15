@@ -25,8 +25,24 @@ import org.apache.flink.metrics.MetricGroup;
 
 /**
  * Reporters are used to export {@link Metric Metrics} to an external backend.
- *
+ * 生产环境中，为了保证业务的正常运行，一般都需要对Flink集群
+ * 和其中作业的运行状态进行监控，Flink提供了主动和被动两种集成方
+ * 式。主动方式是MetricReporter，主动将监控数据写入第三方监控接
+ * 口；被动方式是提供Rest接口(WebMonitorEndpoint)，供外部监控系统调用。
  * <p>Reporters are instantiated via a {@link MetricReporterFactory}.
+ *
+ * <p>MetricReporter是用来向外披露Metric的监测结果的接口，定义
+ * 了MetricReporter的生命周期管理、添加和删除指标时的行为。
+ *
+ * <p>在Flink中使用MetricReporter的时候，有两种实例化的方式：
+ * <p>1 ） 使 用 Java 反 射 机 制 实 例 化 MetricReporter ， 要 求
+ * MetricReporter的实现类必须是public的访问修饰符，不能是抽象
+ * 类，必须有一个无参构造函数。
+ * <p>2 ） 使 用 MetricReporterFactory 工 厂 模 式 实 例 化
+ * MetricReporter，推荐使用这种实例化的方式，相比发射机制，限制更少。
+ * <p>Flink 提 供 了 JMX 、 Graphite 、 InfluxDB 、 Prometheus 、
+ * PrometheusPushGateway、StatsD、Datadog和Slf4j共8种Reporter，
+ * 在配置文件中进行配置就可以直接使用。具体配置参数的使用参见官方文档。
  */
 @Public
 public interface MetricReporter {

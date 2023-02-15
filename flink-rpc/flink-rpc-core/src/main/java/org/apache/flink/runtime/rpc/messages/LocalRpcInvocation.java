@@ -24,6 +24,8 @@ import org.apache.flink.util.Preconditions;
  * Local rpc invocation message containing the remote procedure name, its parameter types and the
  * corresponding call arguments. This message will only be sent if the communication is local and,
  * thus, the message does not have to be serialized.
+ *
+ * 本地RpcEndpoint调用消息，同一个JVM内的调用
  */
 public final class LocalRpcInvocation implements RpcInvocation {
 

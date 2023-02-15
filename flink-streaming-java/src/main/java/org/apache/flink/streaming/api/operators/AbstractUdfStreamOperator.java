@@ -88,6 +88,11 @@ public abstract class AbstractUdfStreamOperator<OUT, F extends Function>
                 context, getOperatorStateBackend(), userFunction);
     }
 
+    /**
+     * UDF算子状态恢复
+     * @param context context that allows to register different states.
+     * @throws Exception
+     */
     @Override
     public void initializeState(StateInitializationContext context) throws Exception {
         super.initializeState(context);

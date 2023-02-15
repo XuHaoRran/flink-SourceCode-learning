@@ -29,6 +29,8 @@ import java.util.Objects;
 
 /**
  * Expression that references another table.
+ * <p>引用另一张表的表达式，该表达式只是用在了API层面上，被
+ * Planner转换为不相关的子查询。
  *
  * <p>This is a pure API expression that is translated into uncorrelated sub-queries by the planner.
  */

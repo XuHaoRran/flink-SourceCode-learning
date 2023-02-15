@@ -21,7 +21,12 @@ package org.apache.flink.runtime.rpc.messages;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** Message for asynchronous runnable invocations. */
+/** Message for asynchronous runnable invocations.
+ * 执行消息是RunAsync，带有Runnable对象的异步执行请求消息。
+ * RpcEndpoint.runAsync方法调用RpcService.runAsync，然后调用
+ * RpcService.scheduleRunAsync；RpcService.scheduleRunAsync 调 用
+ * AkkaInvocationHanlder.tell方法发送RunAsync消息。
+ * */
 public final class RunAsync implements Message {
 
     private final Runnable runnable;

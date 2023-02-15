@@ -145,7 +145,15 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 import static org.apache.flink.util.StringUtils.isNullOrWhitespaceOnly;
 
-/** A catalog implementation for Hive. */
+/** A catalog implementation for Hive.
+ * 因为内存型Catalog是临时的，无持久化，所以其中的元数据无法
+ * 在团队间共享。对接Hive的元数据，既可以与Hadoop生态直接打通，
+ * 又 能 利 用 Hive 存 储 元 数 据 ， 一 次 创 建 多 次 使 用 。 对 于 不 同 版 本 的
+ * Hive，Flink定义了HiveShim接口来支持不同版本的Hive MetaStore。
+ * Catalog并不是孤立的，其上对开发人员、下对实际元数据的存储
+ * 的整体关系如图14-12所示。
+ *
+ * */
 public class HiveCatalog extends AbstractCatalog {
 
     private static final Logger LOG = LoggerFactory.getLogger(HiveCatalog.class);

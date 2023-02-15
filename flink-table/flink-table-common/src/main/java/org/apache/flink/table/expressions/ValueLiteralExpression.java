@@ -52,6 +52,7 @@ import java.util.stream.Stream;
 
 /**
  * Expression for constant literal values.
+ * <p>表示任何类型常量值的对象，属性包含了对象的类型和其数据的值。
  *
  * <p>By design, this class can take any value described by a {@link DataType}. However, it is
  * recommended to use instances with default conversion (see {@link DataType#getConversionClass()}.

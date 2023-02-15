@@ -169,7 +169,7 @@ public class StreamOperatorStateHandler {
         StateSnapshotContextSynchronousImpl snapshotContext =
                 new StateSnapshotContextSynchronousImpl(
                         checkpointId, timestamp, factory, keyGroupRange, closeableRegistry);
-
+        // 持久化state
         snapshotState(
                 streamOperator,
                 timeServiceManager,
@@ -219,18 +219,19 @@ public class StreamOperatorStateHandler {
                             snapshotContext.getRawKeyedOperatorStateOutput(), operatorName);
                 }
             }
+            // 持久化原始State(raw state)
             streamOperator.snapshotState(snapshotContext);
 
             snapshotInProgress.setKeyedStateRawFuture(snapshotContext.getKeyedStateStreamFuture());
             snapshotInProgress.setOperatorStateRawFuture(
                     snapshotContext.getOperatorStateStreamFuture());
-
+            // 持久化operator state
             if (null != operatorStateBackend) {
                 snapshotInProgress.setOperatorStateManagedFuture(
                         operatorStateBackend.snapshot(
                                 checkpointId, timestamp, factory, checkpointOptions));
             }
-
+            // 持久化keyedstate
             if (null != keyedStateBackend) {
                 if (isCanonicalSavepoint(checkpointOptions.getCheckpointType())) {
                     SnapshotStrategyRunner<KeyedStateHandle, ? extends FullSnapshotResources<?>>

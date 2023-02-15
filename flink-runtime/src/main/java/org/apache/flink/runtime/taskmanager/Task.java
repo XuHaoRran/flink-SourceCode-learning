@@ -1347,7 +1347,9 @@ public class Task
 
     /**
      * Calls the invokable to trigger a checkpoint.
-     *
+     * 从StreamTask开始，执行检查点就开始区分StreamTask类型了，
+     * 其中SourceStreamTask是检查点的触发点，产生CheckpointBarrier并
+     * 向下游广播，下游的StreamTask根据CheckpointBarrier触发检查点
      * @param checkpointID The ID identifying the checkpoint.
      * @param checkpointTimestamp The timestamp associated with the checkpoint.
      * @param checkpointOptions Options for performing this checkpoint.
@@ -1407,13 +1409,14 @@ public class Task
                             t);
                 }
             }
-        } else {
+        } else { // 如 果 Task 是 非 Running
             LOG.debug(
                     "Declining checkpoint request for non-running task {} ({}).",
                     taskNameWithSubtask,
                     executionId);
 
             // send back a message that we did not do the checkpoint
+
             declineCheckpoint(
                     checkpointID, CheckpointFailureReason.CHECKPOINT_DECLINED_TASK_NOT_READY);
         }

@@ -30,6 +30,9 @@ import static org.apache.flink.table.types.utils.TypeConversions.fromLegacyInfoT
 
 /**
  * A {@link TableSink} specifies how to emit a table to an external system or location.
+ * <p>数据写出到外部存储的时候，需要面对不同的协议、API、数据的
+ * 格式，所以需要将写出行为进行抽象，Table Sink就是数据输出的顶
+ * 层抽象，用来描述如何将表的数据写出到外部存储系统。
  *
  * <p>The interface is generic such that it can support different storage locations and formats.
  *

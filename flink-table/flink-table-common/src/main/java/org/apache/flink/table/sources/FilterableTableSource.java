@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Adds support for filtering push-down to a {@link TableSource}. A {@link TableSource} extending
  * this interface is able to filter records before returning.
- *
+ * 过滤不符合条件的记录。
  * @deprecated This interface will not be supported in the new source design around {@link
  *     DynamicTableSource}. Use {@link SupportsFilterPushDown} instead. See FLIP-95 for more
  *     information.

@@ -134,10 +134,11 @@ public class DefaultCompletedCheckpointStore<R extends ResourceVersion<R>>
 
         // Now add the new one. If it fails, we don't want to lose existing data.
         checkpointStateHandleStore.addAndLock(path, checkpoint);
-
+        // 把CompletedCheckpoint加入已完成的检查点集合
         completedCheckpoints.addLast(checkpoint);
 
         // Remove completed checkpoint from queue and checkpointStateHandleStore, not discard.
+        // 并从未完成检查点集合删除该检查点，CompletedCheckpoint中保存了状态的句柄、状态的存储路径、元信息的句柄等信息
         Optional<CompletedCheckpoint> subsume =
                 CheckpointSubsumeHelper.subsume(
                         completedCheckpoints,

@@ -21,7 +21,9 @@ package org.apache.flink.table.api;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.table.expressions.Expression;
 
-/** A table that has been grouped on a set of grouping keys. */
+/** A table that has been grouped on a set of grouping keys.
+ * GroupedTable
+ * */
 @PublicEvolving
 public interface GroupedTable {
 

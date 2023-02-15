@@ -27,7 +27,8 @@ import java.io.Serializable;
 /**
  * Remote {@link FencedMessage} implementation. This message is used when the communication is
  * remote and thus requires its payload to be serializable.
- *
+ * ：远程Fence Token消息，包括本地不同
+ * JVM和跨节点的JVM调用
  * @param <F> type of the fencing token
  * @param <P> type of the payload
  */

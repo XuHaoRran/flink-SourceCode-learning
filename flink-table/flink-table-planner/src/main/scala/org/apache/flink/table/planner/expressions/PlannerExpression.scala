@@ -25,6 +25,12 @@ import _root_.scala.collection.JavaConversions._
 
 import java.util
 
+/**
+ * PlannerExpression有3个子类，表示3类运算：
+ * 1）BinaryExpression（二元运算）。
+ * 2）UnaryExpression（一元运算）。
+ * 3）LeafExpression（叶子节点）。
+ */
 abstract class PlannerExpression extends TreeNode[PlannerExpression] with Expression {
 
   /**

@@ -313,7 +313,7 @@ public class AkkaRpcService implements RpcService {
         // from this class . That works better in cases where Flink runs embedded and all Flink
         // code is loaded dynamically (for example from an OSGI bundle) through a custom ClassLoader
         ClassLoader classLoader = getClass().getClassLoader();
-
+        // 生成一个包含这些接口的代理，将调用转发到InnvocationHandler
         @SuppressWarnings("unchecked")
         RpcServer server =
                 (RpcServer)

@@ -641,6 +641,9 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId>
             final long checkpointId,
             final CheckpointMetrics checkpointMetrics,
             @Nullable final SerializedValue<TaskStateSnapshot> checkpointState) {
+        // JobMaster 通 过 调 度 器 ScheduerNG 任 务 把 信 息 交 给
+        //CheckpointCoordinator.receiveAcknowledgeMessage，来响应算子检
+        //查点完成事件。
         schedulerNG.acknowledgeCheckpoint(
                 jobID,
                 executionAttemptID,

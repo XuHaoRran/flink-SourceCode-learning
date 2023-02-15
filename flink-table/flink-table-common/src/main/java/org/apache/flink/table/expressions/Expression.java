@@ -24,7 +24,22 @@ import org.apache.flink.table.types.DataType;
 import java.util.List;
 
 /**
- * General interface for all kinds of expressions.
+ * <p>Expression是所有表达式的顶层接口，用来表示尚未经过解析的
+ * 表达式，解析、验证之后成为ResolvedExpression。Expression可以
+ * 表达树形的表达式结构。Expression的子类特别多，数学运算、条件
+ * 运算、逻辑运算、函数调用等都是用Expression表示的。
+ * <p>Expression可以表达以下类型。
+ * <ul>
+ *  <li>1）常量值。</li>
+ *  <li>2）字段引用。</li>
+ *  <li>3）函数调用。</li>
+ * </ul>
+ *
+ * <p>所有的表达式运算都用函数来表示（如数学运算），DIV函数表示
+ * 除法运算、EqualTo函数表示相等判断。表达式Expression可以有子表
+ * 达式。
+ *
+ * <p>General interface for all kinds of expressions.
  *
  * <p>Expressions represent a logical tree for producing a computation result. Every expression
  * consists of zero, one, or more subexpressions. Expressions might be literal values, function

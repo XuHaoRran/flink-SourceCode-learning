@@ -20,7 +20,12 @@ package org.apache.flink.metrics;
 
 import org.apache.flink.annotation.Public;
 
-/** A Counter is a {@link Metric} that measures a count. */
+/** A Counter is a {@link Metric} that measures a count.
+ * 用来统计一个指标的总量。以Flink中的指标为例，算子的接收记
+ * 录 总 数 （ numRecordsIn ） 和 发 送 记 录 总 数 （ numRecordsOut ） 属 于
+ * Counter类型。
+ *
+ * */
 @Public
 public interface Counter extends Metric {
 

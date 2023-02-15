@@ -29,6 +29,9 @@ import org.apache.flink.table.types.inference.TypeInference;
 import org.apache.flink.util.Collector;
 
 /**
+ * 表聚合函数其实就是把表函数和聚合函数的行为融合在一起，对
+ * 多行数据进行计算，输出多行多列数据
+ *
  * Base class for a user-defined table aggregate function. A user-defined table aggregate function
  * maps scalar values of multiple rows to zero, one, or multiple rows (or structured types). If an
  * output record consists of only one field, the structured record can be omitted, and a scalar

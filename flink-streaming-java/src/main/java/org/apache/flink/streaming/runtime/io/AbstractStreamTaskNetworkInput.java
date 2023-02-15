@@ -91,6 +91,7 @@ public abstract class AbstractStreamTaskNetworkInput<
         while (true) {
             // get the stream element from the deserializer
             if (currentRecordDeserializer != null) {
+                // 将内存段序列转换为记录的接口
                 RecordDeserializer.DeserializationResult result;
                 try {
                     result = currentRecordDeserializer.getNextRecord(deserializationDelegate);
@@ -108,13 +109,14 @@ public abstract class AbstractStreamTaskNetworkInput<
                     return DataInputStatus.MORE_AVAILABLE;
                 }
             }
-
+            // 从InputGate中获取下一个Buffer
             Optional<BufferOrEvent> bufferOrEvent = checkpointedInputGate.pollNext();
             if (bufferOrEvent.isPresent()) {
                 // return to the mailbox after receiving a checkpoint barrier to avoid processing of
                 // data after the barrier before checkpoint is performed for unaligned checkpoint
                 // mode
                 if (bufferOrEvent.get().isBuffer()) {
+                    // 如果是Buffer，则设置RecordDeserializer处理下一条记录，否则释放RecordDeserializer
                     processBuffer(bufferOrEvent.get());
                 } else {
                     return processEvent(bufferOrEvent.get());

@@ -28,7 +28,20 @@ import java.util.Optional;
 
 /**
  * A common parent that describes the <i>unresolved</i> metadata of a table or view in a catalog.
+ * CatalogTable对应于数据库中的表，CatalogView对应于数据库中
+ * 的视图，两者相似，所以继承了共同的CatalogBaseTable接口
  *
+ * <p>表是一种存储的实体，表的元数据包含了表的字段信息、表的分
+ * 区信息、表的属性、表的描述信息等。表的字段定义与传统数据库是
+ * 类似的。表的分区信息主要是描述分区表，Flink可以分区信息进行数
+ * 据的并行访问。表的属性与Hive类似，在大数据领域中，表可能存储
+ * 在Kafka、Hive、HBase等不同的存储引擎中，对于Flink而言，所有的
+ * 表都是外部数据源，只有表的字段信息、分区信息还不够，还需要表
+ * 的访问信息，如用户名密码、IP地址端口、协议、存储引擎的类型
+ * 等，这些都是使用表的属性来记录的。表的属性是KV类型的结构。
+ * 视图是一个虚拟的概念，本质上是一条SQL查询语句，底层对应于
+ * 一张或者多张表。视图的元数据包含了视图的SQL查询语句、视图的字
+ * 段信息、视图的属性。
  * @see CatalogTable
  * @see CatalogView
  */

@@ -21,7 +21,10 @@ package org.apache.flink.table.api;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.table.expressions.Expression;
 
-/** A table that has been performed on the aggregate function. */
+/** A table that has been performed on the aggregate function.
+ * 对分组之后的Table（如GroupedTable和WindowedGroupTable）执
+ * 行AggregationFunction聚合函数的结果
+ * */
 @PublicEvolving
 public interface AggregatedTable {
 

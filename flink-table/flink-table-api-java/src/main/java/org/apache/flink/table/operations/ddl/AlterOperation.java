@@ -23,7 +23,8 @@ import org.apache.flink.table.operations.Operation;
 
 /**
  * A {@link Operation} that describes the DDL statements, e.g. ALTER TABLE or ALTER DATABASE.
- *
+ * <p>改操作，可以修改Database、表、视图、
+ * 函数等的元数据
  * <p>Different sub operations can have their special target name. For example, a alter table
  * operation may have a target table name and a flag to describe if is exists.
  */

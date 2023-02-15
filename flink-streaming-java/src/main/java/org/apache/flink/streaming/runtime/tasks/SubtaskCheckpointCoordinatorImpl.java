@@ -631,6 +631,7 @@ class SubtaskCheckpointCoordinatorImpl implements SubtaskCheckpointCoordinator {
             Exception ex) {
 
         channelStateWriter.abort(metadata.getCheckpointId(), ex, true);
+        // 清理释放资源
         for (OperatorSnapshotFutures operatorSnapshotResult :
                 operatorSnapshotsInProgress.values()) {
             if (operatorSnapshotResult != null) {

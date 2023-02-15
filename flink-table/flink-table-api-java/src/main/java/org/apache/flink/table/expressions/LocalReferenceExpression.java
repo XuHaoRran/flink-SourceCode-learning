@@ -30,6 +30,9 @@ import java.util.Objects;
 /**
  * Reference to entity local to a certain {@link QueryOperation}. That entity does not come from any
  * of the Operations input. It might be for example a group window in window aggregation.
+ *
+ * <p>用来引用QueryOperation中的本地实体，该实体不是来自上游的
+ * 输入，如引用窗口聚合中的Group Window。
  */
 @Internal
 public class LocalReferenceExpression implements ResolvedExpression {

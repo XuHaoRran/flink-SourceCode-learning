@@ -24,7 +24,7 @@ import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushD
 
 /**
  * Adds support for projection push-down to a {@link TableSource}.
- *
+ * 过滤不会被使用的字段
  * <p>A {@link TableSource} extending this interface is able to project the fields of the returned
  * {@code DataStream} if it is a {@code StreamTableSource}.
  *

@@ -29,6 +29,8 @@ import java.io.Serializable;
 /**
  * Remote rpc invocation message which is used when the actor communication is remote.
  *
+ * <p>远程RpcEndpoint的调用消息，包括本地不同JVM和跨节点的JVM调用
+ *
  * <p>In order to fail fast and report an appropriate error message to the user, we check that the
  * parameter types and the arguments are serializable. In case the invocation call contains a
  * non-serializable object, then an {@link IOException} is thrown.

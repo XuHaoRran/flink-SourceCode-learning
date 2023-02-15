@@ -23,7 +23,7 @@ import org.apache.flink.table.expressions.Expression;
 
 /**
  * A table that has been windowed for {@link OverWindow}s.
- *
+ * 使用开窗函数分组之后的Table
  * <p>Unlike group windows, which are specified in the {@code GROUP BY} clause, over windows do not
  * collapse rows. Instead over window aggregates compute an aggregate for each input row over a
  * range of its neighboring rows.

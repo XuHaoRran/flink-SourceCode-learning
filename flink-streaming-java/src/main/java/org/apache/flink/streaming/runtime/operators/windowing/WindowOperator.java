@@ -234,6 +234,11 @@ public class WindowOperator<K, IN, ACC, OUT, W extends Window>
 
         // create (or restore) the state that hold the actual window contents
         // NOTE - the state may be null in the case of the overriding evicting window operator
+        // 恢复
+        // WindowOperator 是 KeyedState 的 典 型 应 用 ， 其 窗 口 使 用 了
+        // KeyedState在StateBackend中保存窗口数据、定时器等，在恢复的时
+        // 候，除了恢复OperatorState和函数State之外，还进行了窗口定时器
+        // 等State的恢复
         if (windowStateDescriptor != null) {
             windowState =
                     (InternalAppendingState<K, W, IN, ACC, ACC>)

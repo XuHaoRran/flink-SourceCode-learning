@@ -46,7 +46,12 @@ import java.util.stream.Collectors;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-/** A generic catalog implementation that holds all meta objects in memory. */
+/** A generic catalog implementation that holds all meta objects in memory.
+ * 内存型Catalog是Flink原来就有的元数据存储机制，元数据在内
+ * 存中临时保存，无持久化存储，在SQL校验和优化过程中使用。
+ *
+ * */
+
 public class GenericInMemoryCatalog extends AbstractCatalog {
 
     public static final String DEFAULT_DB = "default";
